@@ -1,5 +1,5 @@
 -d mnist
--dp /home/tscott/Documents/datasets/mnist 
+-dp /nfs/datastore/datastore/zhu041/dataset/mnist 
 --t1_train 8000
 --t1_valid 3000
 -k 10
@@ -14,8 +14,8 @@
 --replications 1
 -g 0
 -ctl /cpu:0
--sd /home/tscott/Documents/projects/adapted_deep_embeddings/trained_models/mnist/mnist_10_5/adap_hist_loss
--lf /home/tscott/Documents/projects/adapted_deep_embeddings/trained_models/mnist/mnist_10_5/adap_hist_loss/log.txt
+-sd trained_models/mnist/mnist_10_5/adap_hist_loss
+-lf trained_models/mnist/mnist_10_5/adap_hist_loss/log.txt
 hist_loss
 --dist cos
 --kappa 1
