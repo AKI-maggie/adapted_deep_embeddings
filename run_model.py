@@ -4,6 +4,7 @@ import numpy as np
 import os
 import random
 import tensorflow as tf
+import shutil
 
 from data.mnist.read_mnist import MNIST
 from data.isolet.read_isolet import Isolet
@@ -387,7 +388,11 @@ def run(params):
             sess.run(init)
             
             rep_path = os.path.join(params['save_dir'], 'replication{}'.format(rep + 1))
+            
+            if os.path.exists(rep_path):
+                shutil.rmtree(rep_path)
             os.mkdir(rep_path)
+            
             model.config['save_dir_by_rep'] = rep_path
 
             logging.debug('running training/testing')

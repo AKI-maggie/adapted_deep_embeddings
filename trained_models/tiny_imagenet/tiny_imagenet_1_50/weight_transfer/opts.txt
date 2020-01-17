@@ -1,5 +1,5 @@
 -d tiny_imagenet
--dp /home/tscott/Documents/datasets/tiny_imagenet/tiny-imagenet-200
+-dp /nfs/datastore/datastore/zhu041/dataset/tiny_imagenet/tiny-imagenet-200
 -k 1
 -n 50
 -e 750
@@ -11,6 +11,6 @@
 --replications 1
 -g 0
 -ctl /cpu:0
--sd /home/tscott/Documents/projects/adapted_deep_embeddings/trained_models/tiny_imagenet/tiny_imagenet_1_50/weight_transfer
--lf /home/tscott/Documents/projects/adapted_deep_embeddings/trained_models/tiny_imagenet/tiny_imagenet_1_50/weight_transfer/log.txt
+-sd trained_models/tiny_imagenet/tiny_imagenet_1_50/weight_transfer
+-lf trained_models/tiny_imagenet/tiny_imagenet_1_50/weight_transfer/log.txt
 weight_transfer
