@@ -162,10 +162,10 @@ class TinyImageNet():
         # shuffle = np.random.permutation(len(self.y_task2))
         # self.x_task2, self.y_task2 = self.x_task2[shuffle], self.y_task2[shuffle]
 
-        # task1_classes = np.sort(np.random.choice(all_classes, n1, replace=False))
-        # indices = np.isin(self.labels, task1_classes)
-        # self.x_task1, self.y_task1 = self.images[indices], self.labels[indices]
-        self.x_task1, self.y_task1 = self.images1, self.labels1
+        task1_classes = np.sort(np.random.choice(all_classes, n1, replace=False))
+        indices = np.isin(self.labels1, task1_classes)
+        self.x_task1, self.y_task1 = self.images1[indices], self.labels1[indices]
+        # self.x_task1, self.y_task1 = self.images1, self.labels1
         shuffle = np.random.permutation(len(self.y_task1))
         self.x_task1, self.y_task1 = self.x_task1[shuffle], self.y_task1[shuffle]
 
