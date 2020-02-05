@@ -45,7 +45,7 @@ class TinyImageNet():
     @classmethod
     def extract_from_json(cls, f, root, images, labels):
         # set a limit first
-        max_sample_num = 10
+        max_sample_num = 100
         n = 0
 
         with open(f) as annotations:
