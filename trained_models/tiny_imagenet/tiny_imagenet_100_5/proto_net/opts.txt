@@ -1,5 +1,6 @@
 -d tiny_imagenet
 -dp /srv/scratch/z5141541/data/tinyImagenet/tiny-imagenet-200 
+-d2 aptos
 -k 100
 -n 5
 -lr 0.0001
@@ -17,4 +18,5 @@ proto
 --training_episodes 10000 
 --evaluation_episodes 350 
 --query_batch_size 1
+--adaptive
 

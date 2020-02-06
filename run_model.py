@@ -213,7 +213,7 @@ def train_proto_nets(sess, model, data, params):
         sess.run(model.optimize, feed_dict=feed_dict)
 
         if i % 200 == 1:
-            valid_cost, valid_acc = proto_performance(sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
+            valid_cost, valid_acc = proto_performance(1, sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
             valid_cost, valid_acc = float(valid_cost), float(valid_acc)
             print('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
             logging.info('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
@@ -223,7 +223,7 @@ def train_proto_nets(sess, model, data, params):
                 best_episode['valid_acc'] = valid_acc
 
                 if not params['adaptive'] or params['k'] <= 1:
-                    test_cost, test_acc = proto_performance(sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
+                    test_cost, test_acc = proto_performance(2, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
                     best_episode['test_acc'] = float(test_acc)
 
                 model.save_model(sess, i)
@@ -245,6 +245,10 @@ def train_proto_nets(sess, model, data, params):
     print('Initial training done \n')
     logging.info('Initial training done \n')
 
+
+    # set to aptos ataset
+    model.config.dataset == 'aptos'
+
     i = 1
     model.restore_model(sess)
     # Let 75% of the k points be used as support and rest as query when adapting
@@ -262,11 +266,18 @@ def train_proto_nets(sess, model, data, params):
             model.learning_rate: params['learning_rate']
         }
 
-        if params['dataset'] == 'tiny_imagenet':
-            prototypes = model.compute_batch_prototypes(sess, support_batch, params['classes_per_episode'])
-            feed_dict[model.p] = prototypes
+        if params['dataset2'] is not None:
+            if params['dataset2'] == 'tiny_imagenet':
+                prototypes = model.compute_batch_prototypes(sess, support_batch, params['classes_per_episode'])
+                feed_dict[model.p] = prototypes
+            else:
+                feed_dict[model.support] = support_batch
         else:
-            feed_dict[model.support] = support_batch
+            if params['dataset'] == 'tiny_imagenet':
+                prototypes = model.compute_batch_prototypes(sess, support_batch, params['classes_per_episode'])
+                feed_dict[model.p] = prototypes
+            else:
+                feed_dict[model.support] = support_batch
         
         sess.run(model.optimize, feed_dict=feed_dict)
 
@@ -280,7 +291,7 @@ def train_proto_nets(sess, model, data, params):
             if train_perf[0] > transfer_best_episode['train_acc']:
                 transfer_best_episode['episode'] = i
                 transfer_best_episode['train_acc'] = train_perf[0]
-                test_cost, test_acc = proto_performance(sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
+                test_cost, test_acc = proto_performance(2, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
                 transfer_best_episode['test_acc'] = float(test_acc)
 
         if i % params['patience'] == 0:

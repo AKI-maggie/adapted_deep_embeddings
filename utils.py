@@ -62,7 +62,7 @@ def proto_episodic_performance(sess, model, x, y, num_classes, num_support, num_
 
     return np.mean(perf, axis=0), np.std(perf, axis=0)
 
-def proto_performance(sess, model, x_s, y_s, x_q, y_q, batch_size):
+def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
     total_cost = 0.0
     total_accuracy = 0.0
     num_query = 0
@@ -75,12 +75,31 @@ def proto_performance(sess, model, x_s, y_s, x_q, y_q, batch_size):
                 model.is_train: False
         }
         
-        if model.config.dataset == 'tiny_imagenet':
-            prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
-            feed_dict[model.p] = prototypes
-        else:
-            feed_dict[model.support] = support_batch
-        
+        if option == 1:
+            if model.config.dataset == 'tiny_imagenet':
+                prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
+                feed_dict[model.p] = prototypes
+            else:
+                feed_dict[model.support] = support_batch
+            
+
+        elif option == 2:
+            if model.config.dataset2 is not None:
+                if model.config.dataset2 == 'tiny_imagenet':
+                    prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
+                    feed_dict[model.p] = prototypes
+                elif model.config.dataset2 == 'aptos':
+                    prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
+                    feed_dict[model.p] = prototypes
+                else:
+                    feed_dict[model.support] = support_batch
+            else:
+                if model.config.dataset == 'tiny_imagenet':
+                    prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
+                    feed_dict[model.p] = prototypes
+                else:
+                    feed_dict[model.support] = support_batch
+
         c, acc, num_corr = sess.run(model.metrics, feed_dict=feed_dict)
 
         if batch_size > 0:

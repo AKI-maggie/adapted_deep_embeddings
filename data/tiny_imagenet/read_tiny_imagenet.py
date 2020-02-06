@@ -8,6 +8,7 @@ import numpy as np
 from scipy.ndimage import imread
 from scipy.misc import imresize
 import json
+import cv2
 
 target_path = '/srv/scratch/z5141541/data/aptos/aptos'
 
@@ -45,7 +46,7 @@ class TinyImageNet():
     @classmethod
     def extract_from_json(cls, f, root, images, labels):
         # set a limit first
-        max_sample_num = 100
+        max_sample_num = 9999
         n = 0
 
         with open(f) as annotations:
@@ -60,7 +61,8 @@ class TinyImageNet():
                 x = os.path.join(root, x)
 
                 img = imread(x)
-                images.append(img)
+                # resize the image to the same size with tiny image
+                images.append(cv2.resize(img, (64,64), interpolation=cv2.INTER_CUBIC))
                 labels.append(int(y) + 1)
 
                 n += 1
@@ -149,7 +151,7 @@ class TinyImageNet():
         all_classes = np.unique(self.labels1)
         print('Number of source domain classes: {0}'.format(len(all_classes)))
 
-        print('Target Domain Full dataset: {0}'.format(len(self.labels2_train)))
+        print('Target Domain Full dataset: {0}'.format(len(self.labels2_train)+len(self.labels2_test)))
 
         all_classes2 = np.unique(self.labels2_train)
         print('Number of target domain classes: {0}'.format(len(all_classes2)))
@@ -170,7 +172,7 @@ class TinyImageNet():
         self.x_task1, self.y_task1 = self.x_task1[shuffle], self.y_task1[shuffle]
 
         print('Task 1 Full: {0}'.format(len(self.y_task1)))
-        print('Task 2 Full: {0}\n'.format(20))
+        # print('Task 2 Full: {0}\n'.format(20))
 
         # Force class labels to start from 0 and increment upwards by 1
         sorted_class_indices = np.sort(np.unique(self.y_task1))
@@ -229,6 +231,11 @@ class TinyImageNet():
 
         self.x_test_task2 = np.array(self.x_test_task2)
         self.y_test_task2 = np.array(self.y_test_task2)
+
+        print(self.x_train_task2.shape)
+        print(self.y_train_task2.shape)
+        print(self.x_test_task2.shape)
+        print(self.y_test_task2.shape)
 
         print('k = {0}, n = {1}'.format(k2, n2))
         print('Task 2 training: {0}'.format(len(self.x_train_task2)))

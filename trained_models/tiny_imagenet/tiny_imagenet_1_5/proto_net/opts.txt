@@ -1,4 +1,5 @@
 -d tiny_imagenet
+-d2 aptos
 -dp /srv/scratch/z5141541/data/tinyImagenet/tiny-imagenet-200 
 -k 1
 -n 5

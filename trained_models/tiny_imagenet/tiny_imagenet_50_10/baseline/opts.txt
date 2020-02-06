@@ -1,5 +1,7 @@
 -d tiny_imagenet
 -dp /srv/scratch/z5141541/data/tinyImagenet/tiny-imagenet-200 
+-d2 aptos
+--adaptive
 -k 50
 -n 10
 -e 1000
