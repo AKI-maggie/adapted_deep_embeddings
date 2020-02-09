@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-
+import os
 from data.episode_generator import generate_training_episode, generate_evaluation_episode
 
 def classification_batch_evaluation(sess, model, ops, batch_size, is_task1, x, y=None, stream=False):
@@ -27,7 +27,7 @@ def hist_loss_batch_eval(sess, model, ops, batch_size, x):
             hidden_rep = np.concatenate((hidden_rep, h), axis=0)
     return hidden_rep
 
-def proto_episodic_performance(sess, model, x, y, num_classes, num_support, num_query, batch_size, evaluation_episodes):
+def proto_episodic_performance(option, sess, model, x, y, num_classes, num_support, num_query, batch_size, evaluation_episodes):
     perf = []
     total_cost = 0.0
     total_accuracy = 0.0
@@ -40,11 +40,27 @@ def proto_episodic_performance(sess, model, x, y, num_classes, num_support, num_
             model.is_train: False
         }
         
-        if model.config.dataset == 'tiny_imagenet':
-            prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
-            feed_dict[model.p] = prototypes
+        if option == 2:
+            if model.config.dataset2 != None:
+                if model.config.dataset2 == 'tiny_imagenet':
+                    prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
+                    feed_dict[model.p] = prototypes
+                elif model.config.dataset2 == 'aptos':
+                    prototypes = model.compute_batch_prototypes(sess, support_batch, 5)
+                    feed_dict[model.p] = prototypes
+                else:
+                    feed_dict[model.support] = support_batch
+            else:
+                if model.config.dataset == 'tiny_imagenet':
+                    prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
+                else:
+                    feed_dict[model.support] = support_batch
         else:
-            feed_dict[model.support] = support_batch
+            if model.config.dataset == 'tiny_imagenet':
+                prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
+                feed_dict[model.p] = prototypes
+            else:
+                feed_dict[model.support] = support_batch
         
         c, acc, num_corr = sess.run(model.metrics, feed_dict=feed_dict)
 
@@ -66,6 +82,11 @@ def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
     total_cost = 0.0
     total_accuracy = 0.0
     num_query = 0
+
+    accuracy_ph = tf.placeholder("float", None)
+    accuracy_summary = tf.summary.scalar(name='acc_summary', tensor=accuracy_ph)
+
+    total_acuracy_li = []
 
     # Generator will only be run once if batch_size <= 0
     for support_batch, query_batch, query_labels_batch in generate_evaluation_episode(x_s, y_s, x_q, y_q, batch_size=batch_size):
@@ -89,7 +110,7 @@ def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
                     prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
                     feed_dict[model.p] = prototypes
                 elif model.config.dataset2 == 'aptos':
-                    prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
+                    prototypes = model.compute_batch_prototypes(sess, support_batch, 5, 5)
                     feed_dict[model.p] = prototypes
                 else:
                     feed_dict[model.support] = support_batch
@@ -100,6 +121,12 @@ def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
                 else:
                     feed_dict[model.support] = support_batch
 
+        # create writer
+        if not os.path.exists("./graphs"):
+            # shutil.rmtree("./graphs")
+            os.mkdir("./graphs")
+        writer = tf.summary.FileWriter('./graphs', sess.graph)
+
         c, acc, num_corr = sess.run(model.metrics, feed_dict=feed_dict)
 
         if batch_size > 0:
@@ -109,6 +136,12 @@ def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
         else:
             total_cost = c
             total_accuracy = acc 
+
+        total_acuracy_li.append(acc)
+
+    for i in range(len(total_acuracy_li)):
+        res1 = sess.run(accuracy_summary, feed_dict={accuracy_ph:total_acuracy_li[i]})
+        writer.add_summary(res1, i)
     
     if batch_size > 0:
         total_accuracy /= num_query

@@ -258,7 +258,12 @@ def train_proto_nets(sess, model, data, params):
     transfer_best_episode = {'episode': -1, 'train_acc': -1, 'test_acc': -1}
     es_acc = 0.0
 
-    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train2, y_train2, params['classes_per_episode'], episode_support, episode_query, params['training_episodes'], batch_size=params['query_batch_size']):
+    classes_per_episode = params['classes_per_episode']
+    if params['dataset2'] is not None:
+        if params['dataset2'] == 'aptos':
+            classes_per_episode = 5
+
+    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train2, y_train2, classes_per_episode, episode_support, episode_query, params['training_episodes'], batch_size=params['query_batch_size']):
         feed_dict = {
             model.query: query_batch,
             model.label: query_labels_batch,
@@ -267,14 +272,14 @@ def train_proto_nets(sess, model, data, params):
         }
 
         if params['dataset2'] is not None:
-            if params['dataset2'] == 'tiny_imagenet':
-                prototypes = model.compute_batch_prototypes(sess, support_batch, params['classes_per_episode'])
+            if params['dataset2'] == 'aptos':
+                prototypes = model.compute_batch_prototypes(sess, support_batch, classes_per_episode)
                 feed_dict[model.p] = prototypes
             else:
                 feed_dict[model.support] = support_batch
         else:
             if params['dataset'] == 'tiny_imagenet':
-                prototypes = model.compute_batch_prototypes(sess, support_batch, params['classes_per_episode'])
+                prototypes = model.compute_batch_prototypes(sess, support_batch, classes_per_episode)
                 feed_dict[model.p] = prototypes
             else:
                 feed_dict[model.support] = support_batch
@@ -282,7 +287,7 @@ def train_proto_nets(sess, model, data, params):
         sess.run(model.optimize, feed_dict=feed_dict)
 
         if i % 200 == 1:
-            train_perf, train_std = proto_episodic_performance(sess, model, x_train2, y_train2, params['classes_per_episode'], episode_support, episode_query, params['query_batch_size'], params['evaluation_episodes'])
+            train_perf, train_std = proto_episodic_performance(2, sess, model, x_train2, y_train2, 5, episode_support, episode_query, params['query_batch_size'], params['evaluation_episodes'])
             train_perf[0] = float(train_perf[0])
             train_perf[1] = float(train_perf[1])
             print('train [{}] train cost: {} train accuracy: {}'.format(i, train_perf[1], train_perf[0]))
