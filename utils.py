@@ -83,11 +83,6 @@ def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
     total_accuracy = 0.0
     num_query = 0
 
-    accuracy_ph = tf.placeholder("float", None)
-    accuracy_summary = tf.summary.scalar(name='acc_summary', tensor=accuracy_ph)
-
-    total_acuracy_li = []
-
     # Generator will only be run once if batch_size <= 0
     for support_batch, query_batch, query_labels_batch in generate_evaluation_episode(x_s, y_s, x_q, y_q, batch_size=batch_size):
         feed_dict = {
@@ -121,12 +116,6 @@ def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
                 else:
                     feed_dict[model.support] = support_batch
 
-        # create writer
-        if not os.path.exists("./graphs"):
-            # shutil.rmtree("./graphs")
-            os.mkdir("./graphs")
-        writer = tf.summary.FileWriter('./graphs', sess.graph)
-
         c, acc, num_corr = sess.run(model.metrics, feed_dict=feed_dict)
 
         if batch_size > 0:
@@ -137,11 +126,6 @@ def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
             total_cost = c
             total_accuracy = acc 
 
-        total_acuracy_li.append(acc)
-
-    for i in range(len(total_acuracy_li)):
-        res1 = sess.run(accuracy_summary, feed_dict={accuracy_ph:total_acuracy_li[i]})
-        writer.add_summary(res1, i)
     
     if batch_size > 0:
         total_accuracy /= num_query

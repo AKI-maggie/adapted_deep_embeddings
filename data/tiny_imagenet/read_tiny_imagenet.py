@@ -43,34 +43,87 @@ class TinyImageNet():
     def process_labels(self, labels):
         return np.array(labels)
 
+    # extract image ids and labels from Aptos dir
     @classmethod
-    def extract_from_json(cls, f, root, images, labels):
-        # set a limit first
-        max_sample_num = 9999
-        n = 0
+    def extract_from_json(cls, f, root, images, labels, subset_classnum, subset_shotnum):       
+        # set up class subset
+        all_class = range(5)
+        zipped_li = [] 
 
+        image_ids = []
+        labels = []
+
+        # get full pairs
         with open(f) as annotations:
             meta = json.load(annotations)
             zipped_li = list(zip(meta['image_names'],meta['image_labels']))
             random.shuffle(zipped_li)
+
             # pick up 10000 samples in a shuffled order
             for x,y in zipped_li:
-                if n > max_sample_num:
-                    break
+                # if n > max_sample_num:
+                    # break
                 # transform the image path name
                 x = os.path.join(root, x)
-
-                img = imread(x)
+                image_ids.append(x)
+                # img = imread(x)
                 # resize the image to the same size with tiny image
-                images.append(cv2.resize(img, (64,64), interpolation=cv2.INTER_CUBIC))
+                # images.append(cv2.resize(img, (64,64), interpolation=cv2.INTER_CUBIC))
                 labels.append(int(y) + 1)
-
-                n += 1
-
-        return images, labels
+        
+        return images_ids, labels
 
     @classmethod
-    def load(cls, source_path, target_path):
+    def load_aptos(cls, selected_img_ids):
+        # check the first one
+        print(selected_img_ids[0])
+
+        imgs = []
+        for each in selected_img_ids:
+            img = imread(each)
+            imgs.append(cv2.resize(img, (64,64), interpolation=cv2.INTER_CUBIC))
+        
+        return imgs
+
+    # extract required subsets and load aptos images 
+    @classmethod
+    def subset_aptos(cls, img_ids, labels, k, n):
+        x = []
+        y = []
+
+        # support 2-label of 5-label
+        classes = []
+        if n == 2:
+            classes = [1, 5]
+        else:
+            classes = range(1,6)
+
+        # choose image subsets and load images according to image ids
+        img_ids = np.array(img_ids)
+        labels = np.array(labels)
+
+        indices = np.isin(labels, classes)
+        task_img_ids, task_labels = image_ids[indices], labels[indices]
+        shuffle = np.random.permutation(len(task_labels))
+        task_img_ids, task_labels = task_img_ids[shuffle], task_labels[shuffle]
+
+        # generate k-shot n-class dataset
+        for i in classes:
+            all_indices = np.where(task_labels == i)[0]
+            idx = np.random.choice(all_indices, k, replace=False)
+
+            x = load_aptos(task_img_ids[idx])
+            y.extend(task_labels[idx])
+
+        x = np.array(x)
+        y = np.array(y)
+
+        print('Task 1 training: {0}'.format(len(x)))
+        print('Task 1 validation: {0}'.format(len(y)))
+        
+
+    @classmethod
+    def load(cls, source_path, target_path, n2, k2):
         class_id = 0
         id_to_label = {}
         validation_annotations = None
@@ -124,20 +177,22 @@ class TinyImageNet():
                 f_path = os.path.join(root, f)
                 if f == 'base15.json':
                     aptos_train_annotations1 = f_path
-                    images2_train, labels2_train = cls.extract_from_json(f_path, "'/srv/scratch/z5141541/data/aptos/", images2_train, labels2_train)
+                    images2_train, labels2_train = cls.extract_from_json(f_path, "'/srv/scratch/z5141541/data/aptos/", images2_train, labels2_train, n2, k2)
                 elif f == 'base19.json':
                     aptos_train_annotations2 = f_path
                     # skip for now
                     continue
                 elif f == 'val15.json':
                     aptos_validation_annotations1 = f_path
-                    images2_test, labels2_test = cls.extract_from_json(f_path, "'/srv/scratch/z5141541/data/aptos/", images2_test, labels2_test)
+                    images2_test, labels2_test = cls.extract_from_json(f_path, "'/srv/scratch/z5141541/data/aptos/", images2_test, labels2_test, n2, k2)
                 elif f == 'val19.json':
                     aptos_validation_annotations2 = f_path
                     # skip for now
                     continue
                 else:
                     continue
+
+        
         
         return images1, labels1, images2_train, labels2_train, images2_test, labels2_test
 

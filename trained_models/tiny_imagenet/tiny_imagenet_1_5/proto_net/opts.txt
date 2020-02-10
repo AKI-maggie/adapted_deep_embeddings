@@ -15,7 +15,7 @@
 proto
 --classes_per_episode 5 
 --query_train_per_class 50 
---training_episodes 10000 
+--training_episodes 400 
 --evaluation_episodes 350 
 --query_batch_size 0
 --adaptive
