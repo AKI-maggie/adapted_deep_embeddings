@@ -10,7 +10,7 @@ from scipy.misc import imresize
 import json
 import cv2
 
-target_path = '/srv/scratch/z5141541/data/aptos/aptos'
+target_path = '/flush3/zhu041/dataset/aptos/aptos'
 
 class TinyImageNet():
     def __init__(self, source_path):
@@ -29,9 +29,10 @@ class TinyImageNet():
 
         self.images1 = self.process_images(ims1)
         self.labels1 = self.process_labels(labels1)
-        self.images2_train = self.process_images(ims2_train)
+        # leave img_ids first
+        self.images2_train = ims2_train
         self.labels2_train = self.process_labels(labels2_train)
-        self.images2_test = self.process_images(ims2_test)
+        self.images2_test = ims2_test
         self.labels2_test = self.process_labels(labels2_test)
 
         return self.images1, self.images2_train, self.images2_test, self.labels1, self.labels2_train, self.labels2_test
@@ -81,8 +82,7 @@ class TinyImageNet():
         imgs = []
         for each in selected_img_ids:
             img = imread(each)
-            imgs.append(cv2.resize(img, (64,64), interpolation=cv2.INTER_CUBIC))
-        
+            imgs.append(cv2.resize(img, (64,64), interpolation=cv2.INTER_CUBIC))        
         return imgs
 
     # extract required subsets and load aptos images 
@@ -90,7 +90,7 @@ class TinyImageNet():
     def subset_aptos(cls, img_ids, labels, k, n):
         x = []
         y = []
-
+        print(labels[:5])
         # support 2-label of 5-label
         classes = []
         if n == 2:
@@ -103,16 +103,21 @@ class TinyImageNet():
         labels = np.array(labels)
 
         indices = np.isin(labels, classes)
-        task_img_ids, task_labels = image_ids[indices], labels[indices]
+        task_img_ids, task_labels = img_ids[indices], labels[indices]
         shuffle = np.random.permutation(len(task_labels))
         task_img_ids, task_labels = task_img_ids[shuffle], task_labels[shuffle]
 
+        print(task_labels.shape)
+        print(task_labels[:5])
         # generate k-shot n-class dataset
         for i in classes:
+            print("Choosing "+str(i))
             all_indices = np.where(task_labels == i)[0]
+            print(all_indices.shape)
+            print(k)
             idx = np.random.choice(all_indices, k, replace=False)
 
-            x.extend(load_aptos(task_img_ids[idx]))
+            x.extend(cls.load_aptos(task_img_ids[idx]))
             y.extend(task_labels[idx])
 
         x = np.array(x)
@@ -179,14 +184,14 @@ class TinyImageNet():
                 f_path = os.path.join(root, f)
                 if f == 'base15.json':
                     aptos_train_annotations1 = f_path
-                    images2_train, labels2_train = cls.extract_from_json(f_path, "'/srv/scratch/z5141541/data/aptos/", images2_train, labels2_train)
+                    images2_train, labels2_train = cls.extract_from_json(f_path, "'/flush3/zhu041/dataset/aptos/", images2_train, labels2_train)
                 elif f == 'base19.json':
                     aptos_train_annotations2 = f_path
                     # skip for now
                     continue
                 elif f == 'val15.json':
                     aptos_validation_annotations1 = f_path
-                    images2_test, labels2_test = cls.extract_from_json(f_path, "'/srv/scratch/z5141541/data/aptos/", images2_test, labels2_test)
+                    images2_test, labels2_test = cls.extract_from_json(f_path, "'/flush3/zhu041/dataset/aptos/", images2_test, labels2_test)
                 elif f == 'val19.json':
                     aptos_validation_annotations2 = f_path
                     # skip for now
@@ -200,6 +205,8 @@ class TinyImageNet():
         # assert n1 + n2 <= 200
         assert k1 < 550 # and k2 < 550
         self.load_data()
+
+        all_classes = np.unique(self.labels1)
 
         """
         Generate source domain training sets (TinyImageNet)
@@ -245,6 +252,9 @@ class TinyImageNet():
         """
         self.x_train_task2, self.y_train_task2 = self.subset_aptos(self.images2_train, self.labels2_train, k2, n2)
         self.x_test_task2, self.y_test_task2 = self.subset_aptos(self.images2_test, self.labels2_test, k2, n2)
+
+        self.x_train_task2 = self.process_images(self.x_train_task2)
+        self.x_test_task2 = self.process_images(self.x_test_task2)
 
         print(self.x_train_task2.shape)
         print(self.y_train_task2.shape)
