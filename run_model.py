@@ -364,7 +364,7 @@ def get_model(params):
             data = Omniglot(params['data_path']).kntl_data_form(params['n'], params['k'], params['n'])
         else:
             model = TinyImageNetProtoModel(params)
-            data = TinyImageNet(params['data_path']).kntl_data_form(350, params['n'], params['k'], params['n'])
+            data = TinyImageNet(params['data_path']).kntl_data_form(350, params['n'], params['k'], 2)
     elif params['command'] == 'weight_transfer':
         if params['dataset'] == 'mnist':
             model = MNISTWeightTransferModel(params)
