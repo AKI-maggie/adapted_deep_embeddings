@@ -1,21 +1,22 @@
 -d tiny_imagenet
--dp /flush3/zhu041/dataset/tinyImagenet/tiny-imagenet-200 
+-dp /srv/scratch/z5141541/data/tinyImagenet/tiny-imagenet-200 
 -d2 aptos
 -k 10
 -n 10
--lr 0.0001
+-lr 0.001
+-lr2 0.01
 -p 6000
 -esr 0.01
 -r 1234
 --replications 1
 -g 0
 -ctl /cpu:0
--sd /home/zhu041/aki/adapted_deep_embeddings/trained_models/tiny_imagenet/tiny_imagenet_10_10/proto_net
--lf /home/zhu041/aki/adapted_deep_embeddings/trained_models/tiny_imagenet/tiny_imagenet_10_10/proto_net/log.txt
+-sd /home/z5141541/tor/adapted_deep_embeddings/trained_models/tiny_imagenet/tiny_imagenet_10_10/proto_net
+-lf /home/z5141541/tor/adapted_deep_embeddings/trained_models/tiny_imagenet/tiny_imagenet_10_10/proto_net/log.txt
 proto
 --classes_per_episode 10 
 --query_train_per_class 50 
---training_episodes 400 
+--training_episodes 10000
 --evaluation_episodes 350 
 --query_batch_size 0
 --adaptive

@@ -39,6 +39,8 @@ def get_opts():
         help='Number of data examples in each batch')
     parser.add_argument('-lr', '--learning_rate', type=float, default=0.001,
         help='Float value for network learning rate')
+    parser.add_argument('-lr2', '--learning_rate2', type=float, default=0.001,
+        help='Float value for network second task learning rate')
     parser.add_argument('-p', '--patience', type=int, default=10,
         help='Number of epochs to wait for improvement before early stopping')
     parser.add_argument('-esr', '--percentage_es', type=float, default=0.01,

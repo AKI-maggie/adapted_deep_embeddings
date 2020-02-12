@@ -10,7 +10,7 @@ from scipy.misc import imresize
 import json
 import cv2
 
-target_path = '/flush3/zhu041/dataset/aptos/aptos'
+target_path = '/srv/scratch/z5141541/data/aptos/aptos/'
 
 class TinyImageNet():
     def __init__(self, source_path):
@@ -184,14 +184,14 @@ class TinyImageNet():
                 f_path = os.path.join(root, f)
                 if f == 'base15.json':
                     aptos_train_annotations1 = f_path
-                    images2_train, labels2_train = cls.extract_from_json(f_path, "'/flush3/zhu041/dataset/aptos/", images2_train, labels2_train)
+                    images2_train, labels2_train = cls.extract_from_json(f_path, "/srv/scratch/z5141541/data/aptos/", images2_train, labels2_train)
                 elif f == 'base19.json':
                     aptos_train_annotations2 = f_path
                     # skip for now
                     continue
                 elif f == 'val15.json':
                     aptos_validation_annotations1 = f_path
-                    images2_test, labels2_test = cls.extract_from_json(f_path, "'/flush3/zhu041/dataset/aptos/", images2_test, labels2_test)
+                    images2_test, labels2_test = cls.extract_from_json(f_path, "/srv/scratch/z5141541/data/aptos/", images2_test, labels2_test)
                 elif f == 'val19.json':
                     aptos_validation_annotations2 = f_path
                     # skip for now

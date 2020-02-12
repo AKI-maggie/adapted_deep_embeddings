@@ -199,8 +199,6 @@ def train_proto_nets(sess, model, data, params):
     train_acc = 0
 
     accuracy_summary = tf.Summary()
-    accuracy_summary.value.add(tag='task1_valid_accuracy', simple_value=valid_acc)
-    accuracy_summary.value.add(tag='task2_train_accuracy', simple_value=train_acc)
 
     # create writer
     if not os.path.exists("./graphs"):
@@ -232,8 +230,11 @@ def train_proto_nets(sess, model, data, params):
             print('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
             logging.info('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
 
-            accuracy_summary.value[0].simple_value = valid_acc
-            writer.add_summary(accuracy_summary, i)
+            if i == 1:
+                accuracy_summary.value.add(tag='task1_valid_accuracy', simple_value=valid_acc)
+            else:
+                accuracy_summary.value[0].simple_value = valid_acc
+                writer.add_summary(accuracy_summary)
 
             if valid_acc > best_episode['valid_acc']:
                 best_episode['episode'] = i
@@ -280,12 +281,12 @@ def train_proto_nets(sess, model, data, params):
         if params['dataset2'] == 'aptos':
             classes_per_episode = 5
 
-    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train2, y_train2, 5, episode_support, episode_query, params['training_episodes'], batch_size=params['query_batch_size']):
+    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train2, y_train2, classes_per_episode, episode_support, episode_query, params['training_episodes'], batch_size=params['query_batch_size']):
         feed_dict = {
             model.query: query_batch,
             model.label: query_labels_batch,
             model.is_train: True,
-            model.learning_rate: params['learning_rate']
+            model.learning_rate: params['learning_rate2']
         }
 
         if params['dataset2'] is not None:
@@ -304,15 +305,18 @@ def train_proto_nets(sess, model, data, params):
         sess.run(model.optimize, feed_dict=feed_dict)
 
         if i % 200 == 1:
-            train_perf, train_std = proto_episodic_performance(2, sess, model, x_train2, y_train2, 5, episode_support, episode_query, params['query_batch_size'], params['evaluation_episodes'])
+            train_perf, train_std = proto_episodic_performance(2, sess, model, x_train2, y_train2, classes_per_episode, episode_support, episode_query, params['query_batch_size'], params['evaluation_episodes'])
             train_perf[0] = float(train_perf[0])
             train_perf[1] = float(train_perf[1])
             print('train [{}] train cost: {} train accuracy: {}'.format(i, train_perf[1], train_perf[0]))
             logging.info('train [{}] train cost: {} train accuracy: {}'.format(i, train_perf[1], train_perf[0]))
 
-            train_acc = train_perf[0]
-            accuracy_summary.value[1].simple_value = train_acc
-            writer.add_summary(accuracy_summary, i)
+            if i == 1:
+                accuracy_summary.value.add(tag='task2_train_accuracy', simple_value=train_acc)
+            else:
+                train_acc = train_perf[0]
+                accuracy_summary.value[1].simple_value = train_acc
+                writer.add_summary(accuracy_summary)
 
             if train_perf[0] > transfer_best_episode['train_acc']:
                 transfer_best_episode['episode'] = i
@@ -364,7 +368,7 @@ def get_model(params):
             data = Omniglot(params['data_path']).kntl_data_form(params['n'], params['k'], params['n'])
         else:
             model = TinyImageNetProtoModel(params)
-            data = TinyImageNet(params['data_path']).kntl_data_form(350, params['n'], params['k'], 5)
+            data = TinyImageNet(params['data_path']).kntl_data_form(350, params['n'], 150, 5)
     elif params['command'] == 'weight_transfer':
         if params['dataset'] == 'mnist':
             model = MNISTWeightTransferModel(params)

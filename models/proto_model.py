@@ -195,6 +195,7 @@ class TinyImageNetProtoModel(ProtoModel):
         d = self.get_single_device()
         with tf.device(assign_to_device(d, self.config.controller)):
             optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+            # optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate)
 
             loss, accuracy, num_correct = self.metrics
             
