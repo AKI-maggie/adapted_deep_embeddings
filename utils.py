@@ -46,8 +46,8 @@ def proto_episodic_performance(option, sess, model, x, y, num_classes, num_suppo
                     prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
                     feed_dict[model.p] = prototypes
                 elif model.config.dataset2 == 'aptos':
-                    prototypes = model.compute_batch_prototypes(sess, support_batch, 5)
-                    feed_dict[model.p] = prototypes
+                    prototypes = model.compute_batch_prototypes2(sess, support_batch, 2)
+                    feed_dict[model.p2] = prototypes
                 else:
                     feed_dict[model.support] = support_batch
             else:
@@ -62,7 +62,7 @@ def proto_episodic_performance(option, sess, model, x, y, num_classes, num_suppo
             else:
                 feed_dict[model.support] = support_batch
         
-        c, acc, num_corr = sess.run(model.metrics, feed_dict=feed_dict)
+        c, acc, num_corr = sess.run(model.metrics2, feed_dict=feed_dict)
 
         if batch_size > 0:
             total_query += query_labels_batch.shape[0] * query_labels_batch.shape[1]
@@ -105,7 +105,7 @@ def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
                     prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
                     feed_dict[model.p] = prototypes
                 elif model.config.dataset2 == 'aptos':
-                    prototypes = model.compute_batch_prototypes(sess, support_batch, 5, 5)
+                    prototypes = model.compute_batch_prototypes(sess, support_batch, 2, 2)
                     feed_dict[model.p] = prototypes
                 else:
                     feed_dict[model.support] = support_batch

@@ -29,6 +29,8 @@ class ProtoModel(Model):
 
     def save_model(self, sess, step):
         self.saver.save(sess, os.path.join(self.config.save_dir_by_rep, 'model.ckpt'), global_step=step)
+        print("Save at")
+        # print(os.path.join(self.config.save_dir_by_rep, 'model.ckpt'))
 
     def restore_model(self, sess):
         checkpoint = tf.train.latest_checkpoint(self.config.save_dir_by_rep)
@@ -90,7 +92,7 @@ class MNISTProtoModel(ProtoModel):
             x = _relu(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1))
             x = _max_pooling('pool2', _relu(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1)), 2, 2)
             x = tf.contrib.layers.flatten(x)
-            x = _fully_connected('fc1', x, 128)
+            x = _fully_connected('fc1', x, 256)
             return x
 
 class IsoletProtoModel(ProtoModel):
@@ -112,7 +114,7 @@ class IsoletProtoModel(ProtoModel):
         d = self.get_single_device()
         with tf.device(assign_to_device(d, self.config.controller)):
             x = self.input
-            x = _relu(_fully_connected('fc1', x, 128))
+            x = _relu(_fully_connected('fc1', x, 256))
             x = _fully_connected('fc2', x, 64)
             return x
 
@@ -141,25 +143,29 @@ class OmniglotProtoModel(ProtoModel):
             x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
             x = _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
             x = tf.contrib.layers.flatten(x)
-            x = _fully_connected('fc1', x, 128)
+            x = _fully_connected('fc1', x, 256)
             return x
 
 class TinyImageNetProtoModel(ProtoModel):
 
     def __init__(self, config):
         super().__init__(config)
-        self.p = tf.placeholder(tf.float32, [None, 128])
+        self.p = tf.placeholder(tf.float32, [None, 256])
+        self.p2 = tf.placeholder(tf.float32, [None, 512])
         self.query = tf.placeholder(tf.float32, [None, None, 64, 64, 3])
         self.label = tf.placeholder(tf.int32, [None, None])
         self.query_reshape = tf.reshape(self.query, shape=[tf.shape(self.query)[0] * tf.shape(self.query)[1], 64, 64, 3])
         self.batch_norm = partial(tf.layers.batch_normalization,
             momentum=0.9, epsilon=1e-5, fused=True, center=True, scale=False)
         self.prediction
+        self.prediction2
         self.optimize
+        self.optimize2
         self.metrics
+        self.metrics2
 
     def compute_batch_prototypes(self, sess, support_batch, total_classes, num_classes_per_batch=10):
-        prototypes = np.zeros((total_classes, 128))
+        prototypes = np.zeros((total_classes, 256))
         for i in range(0, len(support_batch), num_classes_per_batch):
             s = support_batch[i:i + num_classes_per_batch]
             feed_dict = {
@@ -169,18 +175,43 @@ class TinyImageNetProtoModel(ProtoModel):
             z_p = sess.run(self.prediction_proto, feed_dict=feed_dict)
             prototypes[i:i + num_classes_per_batch] = z_p
         return prototypes
+
+    def compute_batch_prototypes2(self, sess, support_batch, total_classes, num_classes_per_batch=10):
+        prototypes = np.zeros((total_classes, 512))
+        for i in range(0, len(support_batch), num_classes_per_batch):
+            s = support_batch[i:i + num_classes_per_batch]
+            feed_dict = {
+                self.query: s,
+                self.is_train: False
+            }
+            z_p = sess.run(self.prediction_proto2, feed_dict=feed_dict)
+            prototypes[i:i + num_classes_per_batch] = z_p
+        return prototypes
     
     @define_scope
     def prediction(self):
         d = self.get_single_device()
         with tf.device(assign_to_device(d, self.config.controller)):
             x = self.query_reshape
-            x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
-            x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
-            x = _max_pooling('pool3', _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
+            x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1), training=True)), 2, 2)
+            x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1), training=True)), 2, 2)
+            x = _max_pooling('pool3', _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1), training=True)), 2, 2)
             x = _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
             x = tf.contrib.layers.flatten(x)
-            x = _fully_connected('fc1', x, 128)
+            x = _fully_connected('fc1', x, 256)
+            return x
+
+    @define_scope
+    def prediction2(self):
+        d = self.get_single_device()
+        with tf.device(assign_to_device(d, self.config.controller)):
+            x = self.query_reshape
+            x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1, bias=False), training=False)), 2, 2)
+            x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1, bias=False), training=False)), 2, 2)
+            x = _max_pooling('pool3', _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1, bias=False), training=False)), 2, 2)
+            x = _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=True))
+            x = tf.contrib.layers.flatten(x)
+            x = _fully_connected('fc1', x, 512)
             return x
 
     @define_scope
@@ -189,15 +220,39 @@ class TinyImageNetProtoModel(ProtoModel):
         with tf.device(assign_to_device(d, self.config.controller)):
             proto = self.prediction
             return tf.reduce_mean(tf.reshape(proto, [tf.shape(self.query)[0], tf.shape(self.query)[1], tf.shape(proto)[-1]]), axis=1)
+    
+    @define_scope
+    def prediction_proto2(self):
+        d = self.get_single_device()
+        with tf.device(assign_to_device(d, self.config.controller)):
+            proto = self.prediction2
+            return tf.reduce_mean(tf.reshape(proto, [tf.shape(self.query)[0], tf.shape(self.query)[1], tf.shape(proto)[-1]]), axis=1)
 
     @define_scope
     def optimize(self):
         d = self.get_single_device()
         with tf.device(assign_to_device(d, self.config.controller)):
             optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+            # optimizer = tf.train.AdagradOptimizer(learning_rate=self.learning_rate)
             # optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate)
 
             loss, accuracy, num_correct = self.metrics
+            
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.control_dependencies(update_ops):
+                train_op = optimizer.minimize(loss)
+
+            return train_op, loss, accuracy
+    
+    @define_scope
+    def optimize2(self):
+        d = self.get_single_device()
+        with tf.device(assign_to_device(d, self.config.controller)):
+            # optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+            # optimizer = tf.train.AdagradOptimizer(learning_rate=self.learning_rate)
+            optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate)
+
+            loss, accuracy, num_correct = self.metrics2
             
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(update_ops):
@@ -211,5 +266,13 @@ class TinyImageNetProtoModel(ProtoModel):
         with tf.device(assign_to_device(d, self.config.controller)):
             query = self.prediction
             loss, accuracy, num_correct = prototypical_networks_loss(self.p, query, tf.shape(self.query)[1], self.label)
+            return loss, accuracy, num_correct
+
+    @define_scope(scope='stream_metrics2')
+    def metrics2(self):
+        d = self.get_single_device()
+        with tf.device(assign_to_device(d, self.config.controller)):
+            query = self.prediction2
+            loss, accuracy, num_correct = prototypical_networks_loss(self.p2, query, tf.shape(self.query)[1], self.label)
             return loss, accuracy, num_correct
     

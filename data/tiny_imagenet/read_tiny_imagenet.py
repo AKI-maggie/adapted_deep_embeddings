@@ -70,7 +70,7 @@ class TinyImageNet():
                 # img = imread(x)
                 # resize the image to the same size with tiny image
                 # images.append(cv2.resize(img, (64,64), interpolation=cv2.INTER_CUBIC))
-                labels.append(int(y) + 1)
+                labels.append(int(y))
         
         return image_ids, labels
 
