@@ -18,7 +18,9 @@ def get_opts():
     parser.add_argument('-d2', '--dataset2', type=str, required=False, choices=('mnist', 'omniglot', 'tiny_imagenet', 'isolet', 'aptos'),
         dest='dataset2', help='Name of dataset to be used in second task')
     parser.add_argument('-dp', '--data_path', type=str, required=True,
-        help='Path to dataset files')
+        help='Path to default dataset files')
+    parser.add_argument('-dp2', '--data_path2', type=str, required=False,
+        help='Path to dataset files for Aptos')
 
     # Training parameters
     parser.add_argument('--t1_train', type=int, default=None,

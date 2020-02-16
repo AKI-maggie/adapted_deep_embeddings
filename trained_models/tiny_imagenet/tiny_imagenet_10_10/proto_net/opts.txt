@@ -1,7 +1,8 @@
 -d tiny_imagenet
 -dp /srv/scratch/z5141541/data/tinyImagenet/tiny-imagenet-200 
+-dp2 /srv/scratch/z5141541/data/aptos/aptos/
 -d2 aptos
--k 10
+-k 100
 -n 10
 -lr 0.001
 -lr2 0.0000001
