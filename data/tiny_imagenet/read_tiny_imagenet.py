@@ -109,7 +109,7 @@ class TinyImageNet():
             else:
                 # load all image ids
                 for x, y in zipped_li:
-                    if load_image_count[int(y)] >= 700:
+                    if load_image_count[int(y)] >= 300:
                         continue
                     x_image = cv2.resize(imread(x), (64,64), interpolation=cv2.INTER_CUBIC)
                     imgs.append(x_image)
@@ -121,6 +121,9 @@ class TinyImageNet():
             print("Aptos data annotation for base 15 cannot be found!")
             quit()
         
+        print("Count:")
+        for each in load_image_count:
+            print(each)
         return imgs, img_ids, labels
 
     # load tinyImageNet data
@@ -193,8 +196,6 @@ class TinyImageNet():
                 for i in range(len(self.y_task1)):
                     self.y_task1[i] = zero_based_classes[sorted_class_indices == self.y_task1[i]]
 
-                
-
                 for i in zero_based_classes:
                     all_indices = np.where(self.y_task1 == i)[0]
                     idx = np.random.choice(all_indices, k, replace=False)
@@ -222,10 +223,10 @@ class TinyImageNet():
 
                 print('Task 2 Full: {0}'.format(len(self.y_task2)))
 
-                sorted_class_indices = np.sort(np.unique(self.y_task2))
-                zero_based_classes = np.arange(0, len(sorted_class_indices))
+                zero_based_classes = np.sort(np.unique(self.y_task2))
 
                 for i in zero_based_classes:
+                    print("Finding for "+str(i))
                     all_indices = np.where(self.y_task2 == i)[0]
                     idx = np.random.choice(all_indices, k, replace=False)
                     self.x_train_task2.extend(self.x_task2[idx])
@@ -258,9 +259,11 @@ class TinyImageNet():
                 print(len(idx))
                 self.x_train_task2.extend(tiny_img_x[idx])
                 self.y_train_task2.extend(tiny_img_y[idx])
+
                 all_indices = np.delete(all_indices, np.where(np.isin(all_indices, idx)))
-                self.x_valid_task2.extend(tiny_img_x[all_indices])
-                self.y_valid_task2.extend(tiny_img_y[all_indices])
+                idx = np.random.choice(all_indices, k, replace=False)
+                self.x_valid_task2.extend(tiny_img_x[idx])
+                self.y_valid_task2.extend(tiny_img_y[idx])
 
                 # extend aptos images
                 aptos_img_x, aptos_img_y, z = x2, y2, z2
@@ -274,8 +277,9 @@ class TinyImageNet():
                 self.y_train_task2.extend(aptos_img_y[idx])
 
                 all_indices = np.delete(all_indices, np.where(np.isin(all_indices, idx)))
-                self.x_valid_task2.extend(aptos_img_x[all_indices])
-                self.y_valid_task2.extend(aptos_img_y[all_indices])
+                idx = np.random.choice(all_indices, k, replace=False)
+                self.x_valid_task2.extend(aptos_img_x[idx])
+                self.y_valid_task2.extend(aptos_img_y[idx])
 
                 self.x_train_task2 = np.array(self.x_train_task2)
                 self.y_train_task2 = np.array(self.y_train_task2)

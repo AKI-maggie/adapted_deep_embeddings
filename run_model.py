@@ -206,86 +206,83 @@ def train_proto_nets(sess, model, data, params):
         os.mkdir("./graphs")
     writer = tf.summary.FileWriter('./graphs', sess.graph)
 
-    # model.create_saver()
-    # i = 1
-    # best_episode = {'episode': -1, 'valid_acc': -1, 'test_acc': -1}
-    # for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, params['classes_per_episode'], params['k'], params['query_train_per_class'], 20000, batch_size=params['query_batch_size']):
-    #     # auto adjust learning rate to avoid weight explosion
-    #     if valid_acc < 0.45:
-    #         feed_dict = {
-    #             model.query: query_batch,
-    #             model.label: query_labels_batch,
-    #             model.is_train: True,
-    #             model.learning_rate: params['learning_rate']
-    #         }
-    #     elif valid_acc < 0.5:
-    #         feed_dict = {
-    #             model.query: query_batch,
-    #             model.label: query_labels_batch,
-    #             model.is_train: True,
-    #             model.learning_rate: params['learning_rate']/10
-    #         }
-    #     else:
-    #         feed_dict = {
-    #             model.query: query_batch,
-    #             model.label: query_labels_batch,
-    #             model.is_train: True,
-    #             model.learning_rate: params['learning_rate']/10 * (1 - valid_acc)
-    #         }
+    model.create_saver()
+    i = 1
+    best_episode = {'episode': -1, 'valid_acc': -1, 'test_acc': -1}
+    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, params['classes_per_episode'], params['k'], params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
+        # auto adjust learning rate to avoid weight explosion
+        if valid_acc < 0.45:
+            feed_dict = {
+                model.query: query_batch,
+                model.label: query_labels_batch,
+                model.is_train: True,
+                model.learning_rate: params['learning_rate']
+            }
+        elif valid_acc < 0.5:
+            feed_dict = {
+                model.query: query_batch,
+                model.label: query_labels_batch,
+                model.is_train: True,
+                model.learning_rate: params['learning_rate']/10
+            }
+        else:
+            feed_dict = {
+                model.query: query_batch,
+                model.label: query_labels_batch,
+                model.is_train: True,
+                model.learning_rate: params['learning_rate']/10 * (1 - valid_acc)
+            }
 
-    #     if params['dataset'] == 'tiny_imagenet':
-    #         prototypes = model.compute_batch_prototypes(sess, support_batch, params['classes_per_episode'])
-    #         feed_dict[model.p] = prototypes
-    #     else:
-    #         feed_dict[model.support] = support_batch
+        if params['dataset'] == 'tiny_imagenet':
+            prototypes = model.compute_batch_prototypes(sess, support_batch, params['classes_per_episode'])
+            feed_dict[model.p] = prototypes
+        else:
+            feed_dict[model.support] = support_batch
 
-    #     sess.run(model.optimize, feed_dict=feed_dict)
+        sess.run(model.optimize, feed_dict=feed_dict)
 
-    #     if i % 200 == 1:
-    #         valid_cost, valid_acc = proto_performance(1, sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
-    #         valid_cost, valid_acc = float(valid_cost), float(valid_acc)
-    #         print('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
-    #         logging.info('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
+        if i % 200 == 1:
+            valid_cost, valid_acc = proto_performance(1, sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
+            valid_cost, valid_acc = float(valid_cost), float(valid_acc)
+            print('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
+            logging.info('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
 
-    #         if i == 1:
-    accuracy_summary.value.add(tag='task1_valid_accuracy', simple_value=0)
-    accuracy_summary.value.add(tag='task1_valid_loss', simple_value=0)
-    #         else:
-                # accuracy_summary.value[0].simple_value = valid_acc
-                # accuracy_summary.value[1].simple_value = valid_cost
-    #             writer.add_summary(accuracy_summary)
+            if i == 1:
+                accuracy_summary.value.add(tag='task1_valid_accuracy', simple_value=0)
+                accuracy_summary.value.add(tag='task1_valid_loss', simple_value=0)
+            else:
+                accuracy_summary.value[0].simple_value = valid_acc
+                accuracy_summary.value[1].simple_value = valid_cost
+                writer.add_summary(accuracy_summary)
 
-    #         if valid_acc > best_episode['valid_acc']:
-    #             best_episode['episode'] = i
-    #             best_episode['valid_acc'] = valid_acc
+            if valid_acc > best_episode['valid_acc']:
+                best_episode['episode'] = i
+                best_episode['valid_acc'] = valid_acc
 
-    #             if not params['adaptive'] or params['k'] <= 1:
-    #                 test_cost, test_acc = proto_performance(2, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
-    #                 best_episode['test_acc'] = float(test_acc)
+                if not params['adaptive'] or params['k'] <= 1:
+                    test_cost, test_acc = proto_performance(1, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
+                    best_episode['test_acc'] = float(test_acc)
 
-    #             # model.save_model(sess, i)
+                # model.save_model(sess, i)
 
-    #         if i - best_episode['episode'] >= params['patience']:
-    #             print('Early Stopping Episode: {}\n'.format(i))
-    #             logging.info('Early Stopping Episode: {}\n'.format(i))
-    #             break
+            if i - best_episode['episode'] >= params['patience']:
+                print('Early Stopping Episode: {}\n'.format(i))
+                logging.info('Early Stopping Episode: {}\n'.format(i))
+                break
 
-    #     i += 1
+        i += 1
 
-    # if not params['adaptive'] or params['k'] <= 1:
-    #     print('Optimization Finished \n')
-    #     print('test accuracy: {}'.format(best_episode['test_acc']))
-    #     logging.info('Optimization Finished \n')
-    #     logging.info('test accuracy: {}'.format(best_episode['test_acc']))
-    #     return
+    if not params['adaptive'] or params['k'] <= 1:
+        print('Optimization Finished \n')
+        print('test accuracy: {}'.format(best_episode['test_acc']))
+        logging.info('Optimization Finished \n')
+        logging.info('test accuracy: {}'.format(best_episode['test_acc']))
+        return
 
-    # print('Initial training done \n')
-    # logging.info('Initial training done \n')
+    print('Initial training done \n')
+    logging.info('Initial training done \n')
 
-    # model.save_model(sess, i)
-
-    # set to aptos ataset
-    model.config.dataset == 'aptos'
+    model.save_model(sess, i)
 
     i = 1
     model.restore_model(sess)
@@ -297,9 +294,8 @@ def train_proto_nets(sess, model, data, params):
     es_acc = 0.0
 
     classes_per_episode = params['classes_per_episode']
-    if params['dataset2'] is not None:
-        if params['dataset2'] == 'aptos':
-            classes_per_episode = 2
+    if params['dataset2'] is not None and params['dataset2'] == 'aptos':
+            classes_per_episode = 5
 
     for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train2, y_train2, classes_per_episode, episode_support, episode_query, params['training_episodes'], batch_size=params['query_batch_size']):
         feed_dict = {
@@ -311,8 +307,8 @@ def train_proto_nets(sess, model, data, params):
 
         if params['dataset2'] is not None:
             if params['dataset2'] == 'aptos':
-                prototypes = model.compute_batch_prototypes2(sess, support_batch, classes_per_episode)
-                feed_dict[model.p2] = prototypes
+                prototypes = model.compute_batch_prototypes(sess, support_batch, classes_per_episode)
+                feed_dict[model.p] = prototypes
             else:
                 feed_dict[model.support] = support_batch
         else:
@@ -322,10 +318,10 @@ def train_proto_nets(sess, model, data, params):
             else:
                 feed_dict[model.support] = support_batch
         
-        sess.run(model.optimize2, feed_dict=feed_dict)
+        sess.run(model.optimize, feed_dict=feed_dict)
 
         if i % 200 == 1:
-            train_perf, train_std = proto_episodic_performance(2, sess, model, x_train2, y_train2, classes_per_episode, episode_support, episode_query, params['query_batch_size'], params['evaluation_episodes'])
+            train_perf, train_std = proto_episodic_performance(5, sess, model, x_train2, y_train2, classes_per_episode, episode_support, episode_query, params['query_batch_size'], params['evaluation_episodes'])
             train_perf[0] = float(train_perf[0])
             train_perf[1] = float(train_perf[1])
             print('train [{}] train cost: {} train accuracy: {}'.format(i, train_perf[1], train_perf[0]))
@@ -342,19 +338,19 @@ def train_proto_nets(sess, model, data, params):
                 accuracy_summary.value[3].simple_value = train_cost
                 writer.add_summary(accuracy_summary)
 
-            # if train_perf[0] > transfer_best_episode['train_acc']:
-            #     transfer_best_episode['episode'] = i
-            #     transfer_best_episode['train_acc'] = train_perf[0]
-            #     test_cost, test_acc = proto_performance(2, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
-            #     transfer_best_episode['test_acc'] = float(test_acc)
+            if train_perf[0] > transfer_best_episode['train_acc']:
+                transfer_best_episode['episode'] = i
+                transfer_best_episode['train_acc'] = train_perf[0]
+                test_cost, test_acc = proto_performance(5, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
+                transfer_best_episode['test_acc'] = float(test_acc)
 
-        # if i % params['patience'] == 0:
-        #     acc_diff = transfer_best_episode['train_acc'] - es_acc
-        #     if acc_diff < params['percentage_es'] * es_acc:
-        #         print('Early Stopping Episode: {}\n'.format(i))
-        #         logging.info('Early Stopping Episode: {}\n'.format(i))
-        #         break
-        #     es_acc = transfer_best_episode['train_acc']
+        if i % params['patience'] == 0:
+            acc_diff = transfer_best_episode['train_acc'] - es_acc
+            if acc_diff < params['percentage_es'] * es_acc:
+                print('Early Stopping Episode: {}\n'.format(i))
+                logging.info('Early Stopping Episode: {}\n'.format(i))
+                break
+            es_acc = transfer_best_episode['train_acc']
 
         i += 1
 
@@ -392,7 +388,7 @@ def get_model(params):
             data = Omniglot(params['data_path']).kntl_data_form(params['n'], params['k'], params['n'])
         else:
             model = TinyImageNetProtoModel(params)
-            data = TinyImageNet(params['data_path'], params['data_path2']).kntl_data_form(350, params['n'], params['k'], 2, 2)
+            data = TinyImageNet(params['data_path'], params['data_path2']).kntl_data_form(350, params['n'], params['k'], 5, 3)
     elif params['command'] == 'weight_transfer':
         if params['dataset'] == 'mnist':
             model = MNISTWeightTransferModel(params)
@@ -420,7 +416,7 @@ def get_model(params):
             data = Omniglot(params['data_path']).kntl_data_form(params['n'], params['k'], params['n'])
         else:
             model = TinyImageNetBaselineModel(params)
-            data = TinyImageNet(params['data_path'], params['data_path2']).kntl_data_form(350, params['n'], params['k'], params['n'], 2)
+            data = TinyImageNet(params['data_path'], params['data_path2']).kntl_data_form(350, params['n'], params['k'], 5, 2)
     else:
         print('Unknown model type')
         logging.debug('Unknown model type')

@@ -2,10 +2,10 @@
 -dp /srv/scratch/z5141541/data/tinyImagenet/tiny-imagenet-200 
 -dp2 /srv/scratch/z5141541/data/aptos/aptos/
 -d2 aptos
--k 100
+-k 10
 -n 10
--lr 0.001
--lr2 0.0000001
+-lr 0.0001
+-lr2 0.0001
 -p 6000
 -esr 0.01
 -r 1234
@@ -15,7 +15,7 @@
 -sd /home/z5141541/tor/adapted_deep_embeddings/trained_models/tiny_imagenet/tiny_imagenet_10_10/proto_net
 -lf /home/z5141541/tor/adapted_deep_embeddings/trained_models/tiny_imagenet/tiny_imagenet_10_10/proto_net/log.txt
 proto
---classes_per_episode 10 
+--classes_per_episode 10
 --query_train_per_class 50 
 --training_episodes 10000
 --evaluation_episodes 350 

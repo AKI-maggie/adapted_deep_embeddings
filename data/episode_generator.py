@@ -60,6 +60,8 @@ def generate_training_episode(x, y, num_classes_per_episode, num_support_per_cla
             yield support_batch, query_batch, query_labels_batch
 
 def generate_evaluation_episode(x_support, y_support, x_query, y_query, batch_size=0):
+    # print(np.unique(y_support))
+    # print(np.unique(y_query))
     assert len(np.unique(y_support)) == len(np.unique(y_query))
     all_unique_classes = np.unique(y_query)
     min_support = float('inf')

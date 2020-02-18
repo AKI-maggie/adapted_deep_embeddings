@@ -77,7 +77,7 @@ class TinyImageNet():
     @classmethod
     def load_aptos(cls, selected_img_ids):
         # check the first one
-        print(selected_img_ids[0])
+        # print(selected_img_ids[0])
 
         imgs = []
         for each in selected_img_ids:
@@ -90,7 +90,7 @@ class TinyImageNet():
     def subset_aptos(cls, img_ids, labels, k, n):
         x = []
         y = []
-        print(labels[:5])
+        # print(labels[:5])
         # support 2-label of 5-label
         classes = []
         if n == 2:
@@ -107,8 +107,8 @@ class TinyImageNet():
         shuffle = np.random.permutation(len(task_labels))
         task_img_ids, task_labels = task_img_ids[shuffle], task_labels[shuffle]
 
-        print(task_labels.shape)
-        print(task_labels[:5])
+        # print(task_labels.shape)
+        # print(task_labels[:5])
         # generate k-shot n-class dataset
         for i in classes:
             print("Choosing "+str(i))
