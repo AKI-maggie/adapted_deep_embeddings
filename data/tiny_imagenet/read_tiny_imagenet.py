@@ -339,7 +339,7 @@ class TinyImageNet():
         print(self.x_valid_task2.shape)
         print(self.y_valid_task2.shape)
 
-        print('k = {0}, n = {1}'.format(k2, n1))
+        print('k = {0}, n = {1}'.format(k2, n2))
         print('Task 2 training: {0}'.format(len(self.x_train_task2)))
         print('Task 2 test: {0}\n'.format(len(self.x_valid_task2)))
 
