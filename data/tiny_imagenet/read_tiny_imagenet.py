@@ -317,7 +317,7 @@ class TinyImageNet():
         else:
             assert k1 < 550 and k2 < 700    # TinyImage has a maximum of 550 shots for each class, Aptos has 700
 
-        self.load_data(option)
+        self.load_data(3)
 
         """
         Generate source domain training dataset (TinyImageNet)
@@ -343,5 +343,5 @@ class TinyImageNet():
         print('Task 2 training: {0}'.format(len(self.x_train_task2)))
         print('Task 2 test: {0}\n'.format(len(self.x_valid_task2)))
 
-        return (self.x_train_task1, self.y_train_task1), (self.x_valid_task1, self.y_valid_task1), (self.x_train_task2, self.y_train_task2), (self.x_valid_task2, self.y_valid_task2)
+        return (self.x_train_task2, self.y_train_task2), (self.x_valid_task2, self.y_valid_task2), (self.x_train_task2, self.y_train_task2), (self.x_valid_task2, self.y_valid_task2)
 
