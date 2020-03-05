@@ -198,7 +198,7 @@ def train_proto_nets(sess, model, data, params):
     valid_acc = 0
     train_acc = 0
 
-    #accuracy_summary = tf.Summary()
+    accuracy_summary = tf.Summary()
 
     # create writer
     if not os.path.exists("./graphs"):
@@ -209,7 +209,7 @@ def train_proto_nets(sess, model, data, params):
     model.create_saver()
     i = 1
     best_episode = {'episode': -1, 'valid_acc': -1, 'test_acc': -1}
-    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, 5, params['k'], params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
+    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, params['classes_per_episode'], params['k'], params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
         # auto adjust learning rate to avoid weight explosion
         if valid_acc < 0.45:
             feed_dict = {
@@ -242,18 +242,18 @@ def train_proto_nets(sess, model, data, params):
         sess.run(model.optimize, feed_dict=feed_dict)
 
         if i % 200 == 1:
-            valid_cost, valid_acc = proto_performance(5, sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
+            valid_cost, valid_acc = proto_performance(1, sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
             valid_cost, valid_acc = float(valid_cost), float(valid_acc)
             print('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
             logging.info('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
 
-            # if i == 1:
-                #accuracy_summary.value.add(tag='task1_valid_accuracy', simple_value=0)
-                #accuracy_summary.value.add(tag='task1_valid_loss', simple_value=0)
-            # else:
-                #accuracy_summary.value[0].simple_value = valid_acc
-                #accuracy_summary.value[1].simple_value = valid_cost
-                #writer.add_summary(accuracy_summary)
+            if i == 1:
+                accuracy_summary.value.add(tag='task1_valid_accuracy', simple_value=0)
+                accuracy_summary.value.add(tag='task1_valid_loss', simple_value=0)
+            else:
+                accuracy_summary.value[0].simple_value = valid_acc
+                accuracy_summary.value[1].simple_value = valid_cost
+                writer.add_summary(accuracy_summary)
 
             if valid_acc > best_episode['valid_acc']:
                 best_episode['episode'] = i
@@ -330,13 +330,13 @@ def train_proto_nets(sess, model, data, params):
             train_acc = train_perf[0]
             train_cost = train_perf[1]
 
-            # if i == 1:
-                #accuracy_summary.value.add(tag='task2_train_accuracy', simple_value=train_acc)
-                #accuracy_summary.value.add(tag='task2_train_loss', simple_value=train_cost)
-            # else:
-                #accuracy_summary.value[2].simple_value = train_acc
-                #accuracy_summary.value[3].simple_value = train_cost
-                #writer.add_summary(accuracy_summary)
+            if i == 1:
+                accuracy_summary.value.add(tag='task2_train_accuracy', simple_value=train_acc)
+                accuracy_summary.value.add(tag='task2_train_loss', simple_value=train_cost)
+            else:
+                accuracy_summary.value[2].simple_value = train_acc
+                accuracy_summary.value[3].simple_value = train_cost
+                writer.add_summary(accuracy_summary)
 
             if train_perf[0] > transfer_best_episode['train_acc']:
                 transfer_best_episode['episode'] = i
