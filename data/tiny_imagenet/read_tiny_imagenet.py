@@ -14,6 +14,8 @@ class TinyImageNet():
         self.path1 = path1
         self.path2 = path2
 
+        print(path2)
+
         self.images1 = []
         self.image_ids1 = []
         self.labels1 = []
@@ -32,7 +34,8 @@ class TinyImageNet():
         self.y_valid_task2 = []
 
     def load_data(self, target_domain_option, aptos_label_no = 0):
-        imgs1, img_ids1, labels1 = self.tinyImageNet_load()
+        # imgs1, img_ids1, labels1 = self.tinyImageNet_load()
+        imgs1, img_ids1, labels1 = self.aptos_load(-1, 1)
 
         # target_domain_option = 1 --> Both domain use TinyImageNet
         # target_domain_option = 2 --> Read one class of Aptos as a part of the target domain
@@ -68,7 +71,7 @@ class TinyImageNet():
 
     # load Aptos data
     # used for testing target source with both Aptos and TinyImageNet
-    def aptos_load(self, label_no=-1):
+    def aptos_load(self, label_no=-1, annotation_no = 0):
         zipped_li = []
         imgs = []
         img_ids = []
@@ -82,7 +85,11 @@ class TinyImageNet():
                 f_path = os.path.join(root, f)
 
                 # For now, only use base15
-                if f == "base15.json":
+                if f == "novel15.json" and annotation_no == 0:
+                    aptos_annotation = f_path
+                    break
+                
+                if f == "base15.json" and annotation_no == 1:
                     aptos_annotation = f_path
                     break
 
@@ -109,21 +116,27 @@ class TinyImageNet():
             else:
                 # load all image ids
                 for x, y in zipped_li:
-                    if load_image_count[int(y)] >= 300:
-                        continue
+                    if annotation_no == 1:
+                        if load_image_count[int(y)] >= 300:
+                            continue
+                    else:
+                        if load_image_count[int(y)] >= 150:
+                            continue
                     x_image = cv2.resize(imread(x), (64,64), interpolation=cv2.INTER_CUBIC)
                     imgs.append(x_image)
                     img_ids.append(x)
                     labels.append(int(y))
                     load_image_count[int(y)] += 1
+                for each in load_image_count:
+                    print("Load "+str(each) +" images")
 
         else:
             print("Aptos data annotation for base 15 cannot be found!")
             quit()
         
-        print("Count:")
-        for each in load_image_count:
-            print(each)
+        # print("Count:")
+        # for each in load_image_count:
+            # print(each)
         return imgs, img_ids, labels
 
     # load tinyImageNet data

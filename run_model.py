@@ -209,10 +209,10 @@ def train_proto_nets(sess, model, data, params):
     model.create_saver()
     i = 1
     best_episode = {'episode': -1, 'valid_acc': -1, 'test_acc': -1}
-    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, params['classes_per_episode'], params['k'], params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
+    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, 5, params['k'], params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
         # stop after 10000
-        if i > 20000:
-            break
+        # if i > 20000:
+        #     break
         # auto adjust learning rate to avoid weight explosion
         if valid_acc < 0.45:
             feed_dict = {
@@ -237,7 +237,7 @@ def train_proto_nets(sess, model, data, params):
             }
 
         if params['dataset'] == 'tiny_imagenet':
-            prototypes = model.compute_batch_prototypes(sess, support_batch, params['classes_per_episode'])
+            prototypes = model.compute_batch_prototypes(sess, support_batch, 5)
             feed_dict[model.p] = prototypes
         else:
             feed_dict[model.support] = support_batch
@@ -245,7 +245,7 @@ def train_proto_nets(sess, model, data, params):
         sess.run(model.optimize, feed_dict=feed_dict)
 
         if i % 200 == 1:
-            valid_cost, valid_acc = proto_performance(1, sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
+            valid_cost, valid_acc = proto_performance(5, sess, model, x_train, y_train, x_valid, y_valid, 0)
             valid_cost, valid_acc = float(valid_cost), float(valid_acc)
             print('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
             logging.info('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
@@ -263,7 +263,7 @@ def train_proto_nets(sess, model, data, params):
                 best_episode['valid_acc'] = valid_acc
 
                 if not params['adaptive']: # or params['k'] <= 1:
-                    test_cost, test_acc = proto_performance(1, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
+                    test_cost, test_acc = proto_performance(5, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
                     best_episode['test_acc'] = float(test_acc)
 
                 # model.save_model(sess, i)
@@ -309,8 +309,8 @@ def train_proto_nets(sess, model, data, params):
         }
 
         # stop after 10000
-        if i > 20000:
-            break
+        # if i > 20000:
+        #     break
             
         if params['dataset2'] is not None:
             if params['dataset2'] == 'aptos':
@@ -395,7 +395,8 @@ def get_model(params):
             data = Omniglot(params['data_path']).kntl_data_form(params['n'], params['k'], params['n'])
         else:
             model = TinyImageNetProtoModel(params)
-            data = TinyImageNet(params['data_path'], params['data_path2']).kntl_data_form(350, params['n'], params['k'], 5, 3)
+            print(params['data_path2'])
+            data = TinyImageNet(params['data_path'], params['data_path2']).kntl_data_form(100, 5, params['k'], 5, 3)
     elif params['command'] == 'weight_transfer':
         if params['dataset'] == 'mnist':
             model = MNISTWeightTransferModel(params)
