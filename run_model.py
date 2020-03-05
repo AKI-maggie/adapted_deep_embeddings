@@ -262,9 +262,9 @@ def train_proto_nets(sess, model, data, params):
                 best_episode['episode'] = i
                 best_episode['valid_acc'] = valid_acc
 
-                if not params['adaptive']: # or params['k'] <= 1:
-                    test_cost, test_acc = proto_performance(5, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
-                    best_episode['test_acc'] = float(test_acc)
+                # if not params['adaptive']: # or params['k'] <= 1:
+                test_cost, test_acc = proto_performance(5, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
+                best_episode['test_acc'] = float(test_acc)
 
                 # model.save_model(sess, i)
 
@@ -275,12 +275,12 @@ def train_proto_nets(sess, model, data, params):
 
         i += 1
 
-    if not params['adaptive']: # or params['k'] <= 1:
-        print('Optimization Finished \n')
-        print('test accuracy: {}'.format(best_episode['test_acc']))
-        logging.info('Optimization Finished \n')
-        logging.info('test accuracy: {}'.format(best_episode['test_acc']))
-        return
+    # if not params['adaptive']: # or params['k'] <= 1:
+    print('Optimization Finished \n')
+    print('test accuracy: {}'.format(best_episode['test_acc']))
+    logging.info('Optimization Finished \n')
+    logging.info('test accuracy: {}'.format(best_episode['test_acc']))
+    return
 
     print('Initial training done \n')
     logging.info('Initial training done \n')
@@ -396,7 +396,7 @@ def get_model(params):
         else:
             model = TinyImageNetProtoModel(params)
             print(params['data_path2'])
-            data = TinyImageNet(params['data_path'], params['data_path2']).kntl_data_form(100, 5, params['k'], 5, 3)
+            data = TinyImageNet(params['data_path'], params['data_path2']).kntl_data_form(400, 5, params['k'], 5, 3)
     elif params['command'] == 'weight_transfer':
         if params['dataset'] == 'mnist':
             model = MNISTWeightTransferModel(params)
