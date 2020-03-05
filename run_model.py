@@ -210,6 +210,9 @@ def train_proto_nets(sess, model, data, params):
     i = 1
     best_episode = {'episode': -1, 'valid_acc': -1, 'test_acc': -1}
     for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, params['classes_per_episode'], params['k'], params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
+        # stop after 10000
+        if i > 20000:
+            break
         # auto adjust learning rate to avoid weight explosion
         if valid_acc < 0.45:
             feed_dict = {
@@ -259,7 +262,7 @@ def train_proto_nets(sess, model, data, params):
                 best_episode['episode'] = i
                 best_episode['valid_acc'] = valid_acc
 
-                if not params['adaptive'] or params['k'] <= 1:
+                if not params['adaptive']: # or params['k'] <= 1:
                     test_cost, test_acc = proto_performance(1, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
                     best_episode['test_acc'] = float(test_acc)
 
@@ -272,7 +275,7 @@ def train_proto_nets(sess, model, data, params):
 
         i += 1
 
-    if not params['adaptive'] or params['k'] <= 1:
+    if not params['adaptive']: # or params['k'] <= 1:
         print('Optimization Finished \n')
         print('test accuracy: {}'.format(best_episode['test_acc']))
         logging.info('Optimization Finished \n')
@@ -305,6 +308,10 @@ def train_proto_nets(sess, model, data, params):
             model.learning_rate: params['learning_rate2']
         }
 
+        # stop after 10000
+        if i > 20000:
+            break
+            
         if params['dataset2'] is not None:
             if params['dataset2'] == 'aptos':
                 prototypes = model.compute_batch_prototypes(sess, support_batch, classes_per_episode)

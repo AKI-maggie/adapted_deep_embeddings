@@ -1,11 +1,15 @@
 -d mnist
 -dp /home/tscott/Documents/datasets/mnist 
+-dp2 /srv/scratch/z5141541/data/aptos/aptos/
+
 --t1_train 8000
 --t1_valid 3000
 -k 100
 -n 5
 --t2_test 10000
 -lr 0.001
+-lr2 0.0001
+
 -p 2000
 -esr 0.01
 -r 1234
