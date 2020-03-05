@@ -69,37 +69,6 @@ class TinyImageNet():
     def process_labels(self, labels):
         return np.array(labels)
 
-    def aptos_ann_load(self,aptos_path, max=150):
-        print(aptos_path)
-        imgs = []
-        img_ids = []
-        labels = []
-        load_count = [0,0,0,0,0]
-
-        if aptos_path is not None:
-            # get image/label pairs
-            with open(aptos_path) as annotations:
-                meta = json.load(annotations)
-                zipped_li = list(zip(meta['image_names'], meta['image_labels']))
-                random.shuffle(zipped_li)
-            
-            for x, y in zipped_li:
-                if load_count[int(y)] > max-1:
-                    continue
-                x_image = cv2.resize(imread(x), (64, 64), interpolation=cv2.INTER_CUBIC)
-                imgs.append(x_image)
-                img_ids.append(x)
-                labels.append(int(y))
-                load_count[int(y)] += 1
-
-        else:
-            quit()
-
-        for each in load_count:
-            print("Loadeeed "+str(each)+" images")     
-
-        return imgs, img_ids, labels, load_count
-        
     # load Aptos data
     # used for testing target source with both Aptos and TinyImageNet
     def aptos_load(self, label_no=-1, annotation_no = 0):
@@ -115,31 +84,60 @@ class TinyImageNet():
             for f in files:
                 f_path = os.path.join(root, f)
 
-                # if f == "novel15.json" and annotation_no == 0:
-                #     aptos_annotation = f_path
+                # For now, only use base15
+                if f == "novel15.json" and annotation_no == 0:
+                    aptos_annotation = f_path
+                    break
                 
-                # elif f == "base15.json" and annotation_no == 1:
-                #     aptos_annotation = f_path
-                i1, i2, i3, i4 = [], [], [], [0,0,0,0,0]
-                if f == "novel15.json" or f == "base15.json": 
-                    i1, i2, i3, i4 = self.aptos_ann_load(f_path, 150)
-                elif f == "novel19.json": 
-                    i1, i2, i3, i4 = self.aptos_ann_load(f_path, 40)
-                elif f == "base19.json":
-                    i1, i2, i3, i4 = self.aptos_ann_load(f_path, 100)
-                imgs.extend(i1)
-                img_ids.extend(i2)
-                labels.extend(i3)
-                for i in range(0, 5):
-                    load_image_count[i] += i4[i]
+                if f == "base15.json" and annotation_no == 1:
+                    aptos_annotation = f_path
+                    break
 
-         
+        if aptos_annotation is not None:
+            # get image/label pairs
+            with open(aptos_annotation) as annotations:
+                meta = json.load(annotations)
+                zipped_li = list(zip(meta['image_names'], meta['image_labels']))
+                random.shuffle(zipped_li)
+            
+            # read 700 images for each class
+            if label_no in range(0, 5):
+                # load specified image ids
+                for x, y in zipped_li:
+                    if int(y) == label_no:
+                        if load_image_count[label_no] >= 700:
+                            break
+                        x_image = cv2.resize(imread(x), (64,64), interpolation=cv2.INTER_CUBIC)
+
+                        imgs.append(x_image)
+                        img_ids.append(x)
+                        labels.append(int(y))
+                        load_image_count[label_no] += 1
+            else:
+                # load all image ids
+                for x, y in zipped_li:
+                    if annotation_no == 1:
+                        if load_image_count[int(y)] >= 300:
+                            continue
+                    else:
+                        if load_image_count[int(y)] >= 150:
+                            continue
+                    x_image = cv2.resize(imread(x), (64,64), interpolation=cv2.INTER_CUBIC)
+                    imgs.append(x_image)
+                    img_ids.append(x)
+                    labels.append(int(y))
+                    load_image_count[int(y)] += 1
+                for each in load_image_count:
+                    print("Load "+str(each) +" images")
+
+        else:
+            print("Aptos data annotation for base 15 cannot be found!")
+            quit()
         
         # print("Count:")
         # for each in load_image_count:
             # print(each)
         return imgs, img_ids, labels
-
 
     # load tinyImageNet data
     def tinyImageNet_load(self):
