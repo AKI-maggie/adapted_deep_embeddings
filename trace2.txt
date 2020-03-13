@@ -1,0 +1,1 @@
+2020-03-13 09:48:21.891844: F tensorflow/stream_executor/cuda/cuda_dnn.cc:516] Check failed: cudnnSetTensorNdDescriptor(handle_.get(), elem_type, nd, dims.data(), strides.data()) == CUDNN_STATUS_SUCCESS (9 vs. 0)batch_descriptor: {count: 500 feature_map_count: 128 spatial: %d 256%d 256 value_min: 0.000000 value_max: 0.000000 layout: BatchDepthYX}

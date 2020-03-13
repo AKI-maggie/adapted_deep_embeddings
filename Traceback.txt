@@ -1,0 +1,124 @@
+Traceback (most recent call last):
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1356, in _do_call
+    return fn(*args)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1341, in _run_fn
+    options, feed_dict, fetch_list, target_list, run_metadata)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1429, in _call_tf_sessionrun
+    run_metadata)
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: 2 root error(s) found.
+  (0) Resource exhausted: OOM when allocating tensor with shape[250,32,512,512] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+         [[{{node prediction/batch_normalization/FusedBatchNorm}}]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+         [[optimize/Adam/epsilon/_193]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+  (1) Resource exhausted: OOM when allocating tensor with shape[250,32,512,512] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+         [[{{node prediction/batch_normalization/FusedBatchNorm}}]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+0 successful operations.
+0 derived errors ignored.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "main.py", line 111, in <module>
+    main()
+  File "main.py", line 108, in main
+    run(params)
+  File "/home/z5141541/tor/adapted_deep_embeddings/run_model.py", line 478, in run
+    train_proto_nets(sess, model, data, params)
+  File "/home/z5141541/tor/adapted_deep_embeddings/run_model.py", line 245, in train_proto_nets
+    sess.run(model.optimize, feed_dict=feed_dict)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 950, in run
+    run_metadata_ptr)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1173, in _run
+    feed_dict_tensor, options, run_metadata)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1350, in _do_run
+    run_metadata)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/client/session.py", line 1370, in _do_call
+    raise type(e)(node_def, op, message)
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: 2 root error(s) found.
+  (0) Resource exhausted: OOM when allocating tensor with shape[250,32,512,512] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+         [[node prediction/batch_normalization/FusedBatchNorm (defined at /scratch/pbs.245765.kman.restech.unsw.edu.au/tmptvw94i4e.py:14) ]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+         [[optimize/Adam/epsilon/_193]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+  (1) Resource exhausted: OOM when allocating tensor with shape[250,32,512,512] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+         [[node prediction/batch_normalization/FusedBatchNorm (defined at /scratch/pbs.245765.kman.restech.unsw.edu.au/tmptvw94i4e.py:14) ]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+0 successful operations.
+0 derived errors ignored.
+
+Errors may have originated from an input operation.
+Input Source operations connected to node prediction/batch_normalization/FusedBatchNorm:
+ prediction/batch_normalization/Const (defined at /home/z5141541/tor/adapted_deep_embeddings/models/proto_model.py:180)
+
+ prediction/conv1/add (defined at /home/z5141541/tor/adapted_deep_embeddings/models/utils.py:106)
+
+Input Source operations connected to node prediction/batch_normalization/FusedBatchNorm:
+ prediction/batch_normalization/Const (defined at /home/z5141541/tor/adapted_deep_embeddings/models/proto_model.py:180)
+
+ prediction/conv1/add (defined at /home/z5141541/tor/adapted_deep_embeddings/models/utils.py:106)
+
+Original stack trace for 'prediction/batch_normalization/FusedBatchNorm':
+  File "main.py", line 111, in <module>
+    main()
+  File "main.py", line 108, in main
+    run(params)
+  File "/home/z5141541/tor/adapted_deep_embeddings/run_model.py", line 453, in run
+    model, data = get_model(params)
+  File "/home/z5141541/tor/adapted_deep_embeddings/run_model.py", line 399, in get_model
+    model = TinyImageNetProtoModel(params)
+  File "/home/z5141541/tor/adapted_deep_embeddings/models/proto_model.py", line 159, in __init__
+    self.prediction
+  File "/home/z5141541/tor/adapted_deep_embeddings/models/utils.py", line 46, in decorator
+    setattr(self, attribute, function(self))
+  File "/home/z5141541/tor/adapted_deep_embeddings/models/proto_model.py", line 180, in prediction
+    x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1), training=True)), 2, 2)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/util/deprecation.py", line 324, in new_func
+    return func(*args, **kwargs)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/layers/normalization.py", line 327, in batch_normalization
+    return layer.apply(inputs, training=training)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/keras/engine/base_layer.py", line 1479, in apply
+    return self.__call__(inputs, *args, **kwargs)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/layers/base.py", line 537, in __call__
+    outputs = super(Layer, self).__call__(inputs, *args, **kwargs)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/keras/engine/base_layer.py", line 634, in __call__
+    outputs = call_fn(inputs, *args, **kwargs)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/autograph/impl/api.py", line 146, in wrapper
+    ), args, kwargs)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/autograph/impl/api.py", line 450, in converted_call
+    result = converted_f(*effective_args, **kwargs)
+  File "/scratch/pbs.245765.kman.restech.unsw.edu.au/tmptvw94i4e.py", line 14, in tf__call
+    retval_ = ag__.converted_call('call', super(BatchNormalization, self), ag__.ConversionOptions(recursive=True, force_conversion=False, optional_features=(), internal_convert_user_code=True), (inputs,), {'training': training})
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/autograph/impl/api.py", line 356, in converted_call
+    return _call_unconverted(f, args, kwargs)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/autograph/impl/api.py", line 253, in _call_unconverted
+    return f(*args, **kwargs)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/keras/layers/normalization.py", line 651, in call
+    outputs = self._fused_batch_norm(inputs, training=training)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/keras/layers/normalization.py", line 494, in _fused_batch_norm
+    training, _fused_batch_norm_training, _fused_batch_norm_inference)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/keras/utils/tf_utils.py", line 58, in smart_cond
+    pred, true_fn=true_fn, false_fn=false_fn, name=name)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/framework/smart_cond.py", line 54, in smart_cond
+    return true_fn()
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/keras/layers/normalization.py", line 480, in _fused_batch_norm_training
+    data_format=self._data_format)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/ops/nn_impl.py", line 1329, in fused_batch_norm
+    name=name)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/ops/gen_nn_ops.py", line 3946, in _fused_batch_norm
+    name=name)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/framework/op_def_library.py", line 788, in _apply_op_helper
+    op_def=op_def)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/util/deprecation.py", line 507, in new_func
+    return func(*args, **kwargs)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/framework/ops.py", line 3616, in create_op
+    op_def=op_def)
+  File "/apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/framework/ops.py", line 2005, in __init__
+    self._traceback = tf_stack.extract_stack()

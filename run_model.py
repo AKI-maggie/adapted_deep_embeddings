@@ -10,6 +10,7 @@ from data.mnist.read_mnist import MNIST
 from data.isolet.read_isolet import Isolet
 from data.omniglot.read_omniglot import Omniglot
 from data.tiny_imagenet.read_tiny_imagenet import TinyImageNet
+from data.aptos.read_aptos import Aptos
 from data.episode_generator import generate_training_episode, generate_evaluation_episode 
 from losses.histogram_loss import train_batches
 from models.hist_model import *
@@ -210,7 +211,7 @@ def train_proto_nets(sess, model, data, params):
     i = 1
     best_episode = {'episode': -1, 'valid_acc': -1, 'test_acc': -1}
     for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, 5, params['k'], params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
-        # stop after 10000
+    # for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, 5, 10, 2, 2, batch_size=params['query_batch_size']):
         # if i > 20000:
         #     break
         # auto adjust learning rate to avoid weight explosion
@@ -244,43 +245,45 @@ def train_proto_nets(sess, model, data, params):
 
         sess.run(model.optimize, feed_dict=feed_dict)
 
-        if i % 200 == 1:
-            valid_cost, valid_acc = proto_performance(5, sess, model, x_train, y_train, x_valid, y_valid, 0)
-            valid_cost, valid_acc = float(valid_cost), float(valid_acc)
-            print('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
-            logging.info('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
+        # if i % 200 == 1:
+        valid_cost, valid_acc = proto_performance(5, sess, model, x_train, y_train, x_valid, y_valid, 0)
+        episode_support = math.floor(0.75 * params['k'])
+        episode_query = params['k'] - episode_support
+        valid_cost, valid_acc = float(valid_cost), float(valid_acc)
+        print('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
+        logging.info('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
 
-            if i == 1:
-                accuracy_summary.value.add(tag='task1_valid_accuracy', simple_value=0)
-                accuracy_summary.value.add(tag='task1_valid_loss', simple_value=0)
-            else:
-                accuracy_summary.value[0].simple_value = valid_acc
-                accuracy_summary.value[1].simple_value = valid_cost
-                writer.add_summary(accuracy_summary)
+        if i == 1:
+            accuracy_summary.value.add(tag='task1_valid_accuracy', simple_value=0)
+            accuracy_summary.value.add(tag='task1_valid_loss', simple_value=0)
+        else:
+            accuracy_summary.value[0].simple_value = valid_acc
+            accuracy_summary.value[1].simple_value = valid_cost
+            writer.add_summary(accuracy_summary)
 
-            if valid_acc > best_episode['valid_acc']:
-                best_episode['episode'] = i
-                best_episode['valid_acc'] = valid_acc
+        if valid_acc > best_episode['valid_acc']:
+            best_episode['episode'] = i
+            best_episode['valid_acc'] = valid_acc
 
-                if not params['adaptive']: # or params['k'] <= 1:
-                    test_cost, test_acc = proto_performance(5, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
-                    best_episode['test_acc'] = float(test_acc)
+            # if not params['adaptive']: # or params['k'] <= 1:
+                # test_cost, test_acc = proto_performance(5, sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
+                # best_episode['test_acc'] = float(test_acc)
 
-                # model.save_model(sess, i)
+            # model.save_model(sess, i)
 
-            if i - best_episode['episode'] >= params['patience']:
-                print('Early Stopping Episode: {}\n'.format(i))
-                logging.info('Early Stopping Episode: {}\n'.format(i))
-                break
+        if i - best_episode['episode'] >= params['patience']:
+            print('Early Stopping Episode: {}\n'.format(i))
+            logging.info('Early Stopping Episode: {}\n'.format(i))
+            break
 
         i += 1
 
-    if not params['adaptive']: # or params['k'] <= 1:
-        print('Optimization Finished \n')
-        print('test accuracy: {}'.format(best_episode['test_acc']))
-        logging.info('Optimization Finished \n')
-        logging.info('test accuracy: {}'.format(best_episode['test_acc']))
-        return
+    # if not params['adaptive']: # or params['k'] <= 1:
+    print('Optimization Finished \n')
+    # print('test accuracy: {}'.format(best_episode['test_acc']))
+    logging.info('Optimization Finished \n')
+    # logging.info('test accuracy: {}'.format(best_episode['test_acc']))
+    return
 
     print('Initial training done \n')
     logging.info('Initial training done \n')
@@ -395,8 +398,9 @@ def get_model(params):
             data = Omniglot(params['data_path']).kntl_data_form(params['n'], params['k'], params['n'])
         else:
             model = TinyImageNetProtoModel(params)
-            print(params['data_path2'])
+            # print(params['data_path2'])
             data = TinyImageNet(params['data_path'], params['data_path2']).kntl_data_form(100, 5, params['k'], 5, 3)
+            # data = Aptos(params['data_path2']).kntl_data_form(5, 0)
     elif params['command'] == 'weight_transfer':
         if params['dataset'] == 'mnist':
             model = MNISTWeightTransferModel(params)

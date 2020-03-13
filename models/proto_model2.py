@@ -138,7 +138,7 @@ class OmniglotProtoModel(ProtoModel):
     def prediction(self):
         d = self.get_single_device()
         with tf.device(assign_to_device(d, self.config.controller)):
-            x = self.inputv
+            x = self.input
             x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
             x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
             x = _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
@@ -150,10 +150,10 @@ class TinyImageNetProtoModel(ProtoModel):
 
     def __init__(self, config):
         super().__init__(config)
-        self.p = tf.placeholder(tf.float32, [None, 256])
-        self.query = tf.placeholder(tf.float32, [None, None, 128, 128, 3])
+        self.p = tf.placeholder(tf.float32, [None, 128])
+        self.query = tf.placeholder(tf.float32, [None, None, 64, 64, 3])
         self.label = tf.placeholder(tf.int32, [None, None])
-        self.query_reshape = tf.reshape(self.query, shape=[tf.shape(self.query)[0] * tf.shape(self.query)[1], 256, 256, 3])
+        self.query_reshape = tf.reshape(self.query, shape=[tf.shape(self.query)[0] * tf.shape(self.query)[1], 64, 64, 3])
         self.batch_norm = partial(tf.layers.batch_normalization,
             momentum=0.9, epsilon=1e-5, fused=True, center=True, scale=False)
         self.prediction
@@ -161,41 +161,28 @@ class TinyImageNetProtoModel(ProtoModel):
         self.metrics
 
     def compute_batch_prototypes(self, sess, support_batch, total_classes, num_classes_per_batch=10):
-        prototypes = np.zeros((5, 256))
-        for i in range(0, len(support_batch), 5):
-            s = support_batch[i:i + 5]
+        prototypes = np.zeros((total_classes, 128))
+        for i in range(0, len(support_batch), num_classes_per_batch):
+            s = support_batch[i:i + num_classes_per_batch]
             feed_dict = {
                 self.query: s,
                 self.is_train: False
             }
             z_p = sess.run(self.prediction_proto, feed_dict=feed_dict)
-            prototypes[i:i + 5] = z_p
+            prototypes[i:i + num_classes_per_batch] = z_p
         return prototypes
     
     @define_scope
     def prediction(self):
         d = self.get_single_device()
         with tf.device(assign_to_device(d, self.config.controller)):
-            print("Start")
             x = self.query_reshape
-            print(x.get_shape())
-            x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 64, 1), training=True)), 2, 2)
-            print(x.get_shape())
-            x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 64, 1), training=True)), 2, 2)
-            print(x.get_shape())
-            x = _max_pooling('pool3', _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 64, 1), training=True)), 2, 2)
-            print(x.get_shape())
-            x = _max_pooling('pool4', _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 64, 1), training=True)), 2, 2)
-            print(x.get_shape())
-            x = _max_pooling('pool5', _relu(self.batch_norm(_conv('conv5', x, 3, x.get_shape()[-1], 64, 1), training=True)), 2, 2)
-            print(x.get_shape())
-            x = _relu(self.batch_norm(_conv('conv6', x, 3, x.get_shape()[-1], 64, 1), training=self.is_train))
-            print(x.get_shape())
+            x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1), training=True)), 2, 2)
+            x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1), training=True)), 2, 2)
+            x = _max_pooling('pool3', _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1), training=True)), 2, 2)
+            x = _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
             x = tf.contrib.layers.flatten(x)
-            print(x.get_shape())
-            x = _fully_connected('fc1', x, 256)
-            print(x.get_shape())
-            print("End")
+            x = _fully_connected('fc1', x, 128)
             return x
 
     @define_scope
@@ -210,6 +197,8 @@ class TinyImageNetProtoModel(ProtoModel):
         d = self.get_single_device()
         with tf.device(assign_to_device(d, self.config.controller)):
             optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+            # optimizer = tf.train.AdagradOptimizer(learning_rate=self.learning_rate)
+            # optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate)
 
             loss, accuracy, num_correct = self.metrics
             

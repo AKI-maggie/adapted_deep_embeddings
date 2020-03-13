@@ -70,7 +70,7 @@ def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
     total_cost = 0.0
     total_accuracy = 0.0
     num_query = 0
-
+    
     # Generator will only be run once if batch_size <= 0
     for support_batch, query_batch, query_labels_batch in generate_evaluation_episode(x_s, y_s, x_q, y_q, batch_size=batch_size):
         feed_dict = {
