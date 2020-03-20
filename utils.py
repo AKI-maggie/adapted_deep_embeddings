@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
-import os
-from data.episode_generator import generate_training_episode, generate_evaluation_episode
+
+from data.episode_generator import aptos_generate_training_episodes, aptos_generate_evaluation_episodes, generate_training_episode, generate_evaluation_episode
 
 def classification_batch_evaluation(sess, model, ops, batch_size, is_task1, x, y=None, stream=False):
     running_vars = tf.get_collection(tf.GraphKeys.LOCAL_VARIABLES, scope='stream_metrics')
@@ -27,7 +27,7 @@ def hist_loss_batch_eval(sess, model, ops, batch_size, x):
             hidden_rep = np.concatenate((hidden_rep, h), axis=0)
     return hidden_rep
 
-def proto_episodic_performance(option, sess, model, x, y, num_classes, num_support, num_query, batch_size, evaluation_episodes):
+def proto_episodic_performance(sess, model, x, y, num_classes, num_support, num_query, batch_size, evaluation_episodes):
     perf = []
     total_cost = 0.0
     total_accuracy = 0.0
@@ -40,15 +40,11 @@ def proto_episodic_performance(option, sess, model, x, y, num_classes, num_suppo
             model.is_train: False
         }
         
-        if option != 1 and model.config.dataset2 == 'aptos':
-            prototypes = model.compute_batch_prototypes(sess, support_batch, option)
+        if model.config.dataset == 'tiny_imagenet':
+            prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
             feed_dict[model.p] = prototypes
         else:
-            if model.config.dataset == 'tiny_imagenet':
-                prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
-                feed_dict[model.p] = prototypes
-            else:
-                feed_dict[model.support] = support_batch
+            feed_dict[model.support] = support_batch
         
         c, acc, num_corr = sess.run(model.metrics, feed_dict=feed_dict)
 
@@ -66,28 +62,32 @@ def proto_episodic_performance(option, sess, model, x, y, num_classes, num_suppo
 
     return np.mean(perf, axis=0), np.std(perf, axis=0)
 
-def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
+def proto_performance(sess, model, x_s, y_s, x_q, y_q, batch_size):
     total_cost = 0.0
     total_accuracy = 0.0
     num_query = 0
-    
+
     # Generator will only be run once if batch_size <= 0
-    for support_batch, query_batch, query_labels_batch in generate_evaluation_episode(x_s, y_s, x_q, y_q, batch_size=batch_size):
+    generator = None
+    if model.config.dataset == 'aptos':
+        generator = aptos_generate_evaluation_episodes
+    else:
+        generator = generate_evaluation_episode
+    for support_batch, query_batch, query_labels_batch in generator(x_s, y_s, x_q, y_q, batch_size=batch_size):
         feed_dict = {
                 model.query: query_batch,
                 model.label: query_labels_batch,
                 model.is_train: False
         }
         
-        if option == 1:
-            if model.config.dataset == 'tiny_imagenet':
-                prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
-                feed_dict[model.p] = prototypes
-            else:
-                feed_dict[model.support] = support_batch
-        else:
-            prototypes = model.compute_batch_prototypes(sess, support_batch, option)
+        if model.config.dataset == 'tiny_imagenet':
+            prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
             feed_dict[model.p] = prototypes
+        elif model.config.dataset == 'aptos':
+            prototypes = model.compute_batch_prototypes(sess, support_batch, model.config.classes_per_episode)
+            feed_dict[model.p] = prototypes
+        else:
+            feed_dict[model.support] = support_batch
         
         c, acc, num_corr = sess.run(model.metrics, feed_dict=feed_dict)
 
@@ -98,7 +98,6 @@ def proto_performance(option, sess, model, x_s, y_s, x_q, y_q, batch_size):
         else:
             total_cost = c
             total_accuracy = acc 
-
     
     if batch_size > 0:
         total_accuracy /= num_query

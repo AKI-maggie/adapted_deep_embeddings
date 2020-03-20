@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 from run_model import run
 
@@ -13,14 +12,10 @@ def get_opts():
     parser = MyArgumentParser(fromfile_prefix_chars='@')
 
     # Dataset parameters
-    parser.add_argument('-d', '--dataset', type=str, required=True, choices=('mnist', 'omniglot', 'tiny_imagenet', 'isolet'),
+    parser.add_argument('-d', '--dataset', type=str, required=True, choices=('aptos', 'mnist', 'omniglot', 'tiny_imagenet', 'isolet'),
         dest='dataset', help='Name of dataset to be used in lowercase')
-    parser.add_argument('-d2', '--dataset2', type=str, required=False, choices=('mnist', 'omniglot', 'tiny_imagenet', 'isolet', 'aptos'),
-        dest='dataset2', help='Name of dataset to be used in second task')
     parser.add_argument('-dp', '--data_path', type=str, required=True,
-        help='Path to default dataset files')
-    parser.add_argument('-dp2', '--data_path2', type=str, required=False,
-        help='Path to dataset files for Aptos')
+        help='Path to dataset files')
 
     # Training parameters
     parser.add_argument('--t1_train', type=int, default=None,
@@ -41,8 +36,6 @@ def get_opts():
         help='Number of data examples in each batch')
     parser.add_argument('-lr', '--learning_rate', type=float, default=0.001,
         help='Float value for network learning rate')
-    parser.add_argument('-lr2', '--learning_rate2', type=float, default=0.001,
-        help='Float value for network second task learning rate')
     parser.add_argument('-p', '--patience', type=int, default=10,
         help='Number of epochs to wait for improvement before early stopping')
     parser.add_argument('-esr', '--percentage_es', type=float, default=0.01,

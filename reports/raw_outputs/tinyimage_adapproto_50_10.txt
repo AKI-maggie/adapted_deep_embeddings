@@ -1,0 +1,111 @@
+valid [1] valid cost: 10203503.0 valid accuracy: 0.30799999833106995
+valid [201] valid cost: 4303.9794921875 valid accuracy: 0.38999998569488525
+W0319 14:48:13.925781 47119221062080 deprecation.py:323] From /apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/training/saver.py:960: remove_checkpoint (from tensorflow.python.training.checkpoint_management) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use standard file APIs to delete files with this prefix.
+valid [401] valid cost: 4335.29296875 valid accuracy: 0.38999998569488525
+valid [601] valid cost: 4230.94482421875 valid accuracy: 0.39250001311302185
+valid [801] valid cost: 4210.279296875 valid accuracy: 0.3919999897480011
+valid [1001] valid cost: 4122.90380859375 valid accuracy: 0.3930000066757202
+valid [1201] valid cost: 4075.5703125 valid accuracy: 0.3930000066757202
+valid [1401] valid cost: 4005.990478515625 valid accuracy: 0.39399999380111694
+valid [1601] valid cost: 3943.606201171875 valid accuracy: 0.39500001072883606
+valid [1801] valid cost: 3864.22802734375 valid accuracy: 0.3955000042915344
+valid [2001] valid cost: 3789.70751953125 valid accuracy: 0.39800000190734863
+valid [2201] valid cost: 3723.173583984375 valid accuracy: 0.39649999141693115
+valid [2401] valid cost: 3627.736572265625 valid accuracy: 0.3930000066757202
+valid [2601] valid cost: 3543.466552734375 valid accuracy: 0.3935000002384186
+valid [2801] valid cost: 3445.8759765625 valid accuracy: 0.39149999618530273
+valid [3001] valid cost: 3352.32080078125 valid accuracy: 0.39149999618530273
+valid [3201] valid cost: 3260.91552734375 valid accuracy: 0.3930000066757202
+valid [3401] valid cost: 3157.19384765625 valid accuracy: 0.39649999141693115
+valid [3601] valid cost: 3058.816650390625 valid accuracy: 0.39750000834465027
+valid [3801] valid cost: 2981.771484375 valid accuracy: 0.39899998903274536
+valid [4001] valid cost: 2895.00048828125 valid accuracy: 0.39899998903274536
+valid [4201] valid cost: 2835.07568359375 valid accuracy: 0.3959999978542328
+valid [4401] valid cost: 2740.624267578125 valid accuracy: 0.398499995470047
+valid [4601] valid cost: 2649.056396484375 valid accuracy: 0.39800000190734863
+valid [4801] valid cost: 2567.282958984375 valid accuracy: 0.40049999952316284
+valid [5001] valid cost: 2503.579345703125 valid accuracy: 0.39800000190734863
+valid [5201] valid cost: 2409.73291015625 valid accuracy: 0.4025000035762787
+valid [5401] valid cost: 2344.013427734375 valid accuracy: 0.40049999952316284
+valid [5601] valid cost: 2271.586181640625 valid accuracy: 0.39899998903274536
+valid [5801] valid cost: 2218.111572265625 valid accuracy: 0.4009999930858612
+valid [6001] valid cost: 2161.8310546875 valid accuracy: 0.39899998903274536
+valid [6201] valid cost: 2110.466552734375 valid accuracy: 0.40299999713897705
+valid [6401] valid cost: 2066.859130859375 valid accuracy: 0.40049999952316284
+valid [6601] valid cost: 2007.188720703125 valid accuracy: 0.39899998903274536
+valid [6801] valid cost: 1966.1787109375 valid accuracy: 0.3995000123977661
+valid [7001] valid cost: 1929.981689453125 valid accuracy: 0.39800000190734863
+valid [7201] valid cost: 1894.15234375 valid accuracy: 0.398499995470047
+valid [7401] valid cost: 1842.9638671875 valid accuracy: 0.39800000190734863
+valid [7601] valid cost: 1820.5047607421875 valid accuracy: 0.4025000035762787
+valid [7801] valid cost: 1785.0687255859375 valid accuracy: 0.4034999907016754
+valid [8001] valid cost: 1775.21875 valid accuracy: 0.4059999883174896
+valid [8201] valid cost: 1741.7257080078125 valid accuracy: 0.4059999883174896
+valid [8401] valid cost: 1712.23046875 valid accuracy: 0.40450000762939453
+valid [8601] valid cost: 1685.1845703125 valid accuracy: 0.40700000524520874
+valid [8801] valid cost: 1665.1915283203125 valid accuracy: 0.4104999899864197
+valid [9001] valid cost: 1632.39990234375 valid accuracy: 0.41850000619888306
+valid [9201] valid cost: 1615.1387939453125 valid accuracy: 0.4189999997615814
+valid [9401] valid cost: 1584.5155029296875 valid accuracy: 0.41999998688697815
+valid [9601] valid cost: 1570.3778076171875 valid accuracy: 0.4189999997615814
+valid [9801] valid cost: 1555.6600341796875 valid accuracy: 0.41999998688697815
+Initial training done
+
+W0319 15:07:40.007289 47119221062080 deprecation.py:323] From /apps/tensorflow/1.14-gpu/lib/python3.7/site-packages/tensorflow/python/training/saver.py:1276: checkpoint_exists (from tensorflow.python.training.checkpoint_management) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use standard file APIs to check for files with this prefix.
+train [1] train cost: 2625.04833984375 train accuracy: 0.3006593883037567
+train [201] train cost: 2292.358154296875 train accuracy: 0.3480442762374878
+train [401] train cost: 1968.710205078125 train accuracy: 0.40173670649528503
+train [601] train cost: 1669.905517578125 train accuracy: 0.4565717875957489
+train [801] train cost: 1399.9844970703125 train accuracy: 0.5024175047874451
+train [1001] train cost: 1206.8212890625 train accuracy: 0.5385491251945496
+train [1201] train cost: 996.13037109375 train accuracy: 0.5894938707351685
+train [1401] train cost: 846.1197509765625 train accuracy: 0.6254941821098328
+train [1601] train cost: 667.7723388671875 train accuracy: 0.6738897562026978
+train [1801] train cost: 541.7269897460938 train accuracy: 0.712285578250885
+train [2001] train cost: 434.1666564941406 train accuracy: 0.7520878314971924
+train [2201] train cost: 349.57257080078125 train accuracy: 0.7848129868507385
+train [2401] train cost: 262.449462890625 train accuracy: 0.8186811804771423
+train [2601] train cost: 211.26962280273438 train accuracy: 0.8434951305389404
+train [2801] train cost: 166.97592163085938 train accuracy: 0.8680881857872009
+train [3001] train cost: 116.10527038574219 train accuracy: 0.8964171409606934
+train [3201] train cost: 97.33467864990234 train accuracy: 0.9100215435028076
+train [3401] train cost: 76.39752197265625 train accuracy: 0.9255828857421875
+train [3601] train cost: 60.582672119140625 train accuracy: 0.9376487731933594
+train [3801] train cost: 45.8767204284668 train accuracy: 0.9460231065750122
+train [4001] train cost: 33.80906677246094 train accuracy: 0.9536719918251038
+train [4201] train cost: 21.83367156982422 train accuracy: 0.9640244245529175
+train [4401] train cost: 17.674884796142578 train accuracy: 0.9701785445213318
+train [4601] train cost: 14.447269439697266 train accuracy: 0.973936915397644
+train [4801] train cost: 11.702339172363281 train accuracy: 0.9789694547653198
+train [5001] train cost: 8.358538627624512 train accuracy: 0.9833651185035706
+train [5201] train cost: 7.408118724822998 train accuracy: 0.9843320250511169
+train [5401] train cost: 5.69454288482666 train accuracy: 0.9885292053222656
+train [5601] train cost: 4.738412380218506 train accuracy: 0.9900237321853638
+train [5801] train cost: 3.735520362854004 train accuracy: 0.9914740920066833
+train [6001] train cost: 3.603827476501465 train accuracy: 0.9925068020820618
+train [6201] train cost: 2.913753032684326 train accuracy: 0.9936495423316956
+train [6401] train cost: 2.1832125186920166 train accuracy: 0.9950557947158813
+train [6601] train cost: 1.806452989578247 train accuracy: 0.9958249926567078
+train [6801] train cost: 1.9838169813156128 train accuracy: 0.9952755570411682
+train [7001] train cost: 1.4580644369125366 train accuracy: 0.9961546063423157
+train [7201] train cost: 1.6069656610488892 train accuracy: 0.9961326122283936
+train [7401] train cost: 1.3861998319625854 train accuracy: 0.9968358278274536
+train [7601] train cost: 1.1023037433624268 train accuracy: 0.9975169897079468
+train [7801] train cost: 1.0484180450439453 train accuracy: 0.9974729418754578
+train [8001] train cost: 0.8892399668693542 train accuracy: 0.9977805614471436
+train [8201] train cost: 0.7301972508430481 train accuracy: 0.9981761574745178
+train [8401] train cost: 0.8266187310218811 train accuracy: 0.9979784488677979
+train [8601] train cost: 0.5068724751472473 train accuracy: 0.9987474679946899
+train [8801] train cost: 0.6873559951782227 train accuracy: 0.9981542229652405
+train [9001] train cost: 0.6119737029075623 train accuracy: 0.9983740448951721
+train [9201] train cost: 0.5880762338638306 train accuracy: 0.9985058307647705
+train [9401] train cost: 0.5249196290969849 train accuracy: 0.9988134503364563
+train [9601] train cost: 0.27819642424583435 train accuracy: 0.9992749094963074
+train [9801] train cost: 0.47171133756637573 train accuracy: 0.9988793730735779
+Transfer training done
+
+test accuracy: 0.3889999985694885

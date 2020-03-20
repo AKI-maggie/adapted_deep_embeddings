@@ -29,8 +29,6 @@ class ProtoModel(Model):
 
     def save_model(self, sess, step):
         self.saver.save(sess, os.path.join(self.config.save_dir_by_rep, 'model.ckpt'), global_step=step)
-        print("Save at")
-        # print(os.path.join(self.config.save_dir_by_rep, 'model.ckpt'))
 
     def restore_model(self, sess):
         checkpoint = tf.train.latest_checkpoint(self.config.save_dir_by_rep)
@@ -92,7 +90,7 @@ class MNISTProtoModel(ProtoModel):
             x = _relu(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1))
             x = _max_pooling('pool2', _relu(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1)), 2, 2)
             x = tf.contrib.layers.flatten(x)
-            x = _fully_connected('fc1', x, 256)
+            x = _fully_connected('fc1', x, 128)
             return x
 
 class IsoletProtoModel(ProtoModel):
@@ -114,7 +112,7 @@ class IsoletProtoModel(ProtoModel):
         d = self.get_single_device()
         with tf.device(assign_to_device(d, self.config.controller)):
             x = self.input
-            x = _relu(_fully_connected('fc1', x, 256))
+            x = _relu(_fully_connected('fc1', x, 128))
             x = _fully_connected('fc2', x, 64)
             return x
 
@@ -138,22 +136,22 @@ class OmniglotProtoModel(ProtoModel):
     def prediction(self):
         d = self.get_single_device()
         with tf.device(assign_to_device(d, self.config.controller)):
-            x = self.inputv
+            x = self.input
             x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
             x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
             x = _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
             x = tf.contrib.layers.flatten(x)
-            x = _fully_connected('fc1', x, 256)
+            x = _fully_connected('fc1', x, 128)
             return x
 
 class TinyImageNetProtoModel(ProtoModel):
 
     def __init__(self, config):
         super().__init__(config)
-        self.p = tf.placeholder(tf.float32, [None, 256])
-        self.query = tf.placeholder(tf.float32, [None, None, 128, 128, 3])
+        self.p = tf.placeholder(tf.float32, [None, 128])
+        self.query = tf.placeholder(tf.float32, [None, None, 64, 64, 3])
         self.label = tf.placeholder(tf.int32, [None, None])
-        self.query_reshape = tf.reshape(self.query, shape=[tf.shape(self.query)[0] * tf.shape(self.query)[1], 256, 256, 3])
+        self.query_reshape = tf.reshape(self.query, shape=[tf.shape(self.query)[0] * tf.shape(self.query)[1], 64, 64, 3])
         self.batch_norm = partial(tf.layers.batch_normalization,
             momentum=0.9, epsilon=1e-5, fused=True, center=True, scale=False)
         self.prediction
@@ -161,50 +159,44 @@ class TinyImageNetProtoModel(ProtoModel):
         self.metrics
 
     def compute_batch_prototypes(self, sess, support_batch, total_classes, num_classes_per_batch=10):
-        prototypes = np.zeros((5, 256))
-        for i in range(0, len(support_batch), 5):
-            s = support_batch[i:i + 5]
+        prototypes = np.zeros((total_classes, 128))
+        for i in range(0, len(support_batch), num_classes_per_batch):
+            s = support_batch[i:i + num_classes_per_batch]
             feed_dict = {
                 self.query: s,
                 self.is_train: False
             }
             z_p = sess.run(self.prediction_proto, feed_dict=feed_dict)
-            prototypes[i:i + 5] = z_p
+            prototypes[i:i + num_classes_per_batch] = z_p
         return prototypes
     
     @define_scope
     def prediction(self):
-        d = self.get_single_device()
-        with tf.device(assign_to_device(d, self.config.controller)):
-            print("Start")
+        # d = self.get_single_device()
+        # with tf.device(assign_to_device(d, self.config.gpu)):
+        with tf.device('/gpu:0'):
             x = self.query_reshape
-            print(x.get_shape())
-            x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 64, 1), training=True)), 2, 2)
-            print(x.get_shape())
-            x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 64, 1), training=True)), 2, 2)
-            print(x.get_shape())
-            x = _max_pooling('pool3', _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 64, 1), training=True)), 2, 2)
-            print(x.get_shape())
-            x = _relu(self.batch_norm(_conv('conv6', x, 3, x.get_shape()[-1], 64, 1), training=self.is_train))
-            print(x.get_shape())
+            x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
+            x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
+            x = _max_pooling('pool3', _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
+            x = _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
             x = tf.contrib.layers.flatten(x)
-            print(x.get_shape())
-            x = _fully_connected('fc1', x, 256)
-            print(x.get_shape())
-            print("End")
+            x = _fully_connected('fc1', x, 128)
             return x
 
     @define_scope
     def prediction_proto(self):
-        d = self.get_single_device()
-        with tf.device(assign_to_device(d, self.config.controller)):
+        # d = self.get_single_device()
+        # with tf.device(assign_to_device(d, self.config.gpu)):
+        with tf.device('/gpu:0'):
             proto = self.prediction
             return tf.reduce_mean(tf.reshape(proto, [tf.shape(self.query)[0], tf.shape(self.query)[1], tf.shape(proto)[-1]]), axis=1)
 
     @define_scope
     def optimize(self):
-        d = self.get_single_device()
-        with tf.device(assign_to_device(d, self.config.controller)):
+        # d = self.get_single_device()
+        # with tf.device(assign_to_device(d, self.config.gpu)):
+        with tf.device('/gpu:0'):
             optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
 
             loss, accuracy, num_correct = self.metrics
@@ -217,8 +209,86 @@ class TinyImageNetProtoModel(ProtoModel):
     
     @define_scope(scope='stream_metrics')
     def metrics(self):
-        d = self.get_single_device()
-        with tf.device(assign_to_device(d, self.config.controller)):
+        # d = self.get_single_device()
+        # with tf.device(assign_to_device(d, self.config.gpu)):
+        with tf.device('/gpu:0'):
             query = self.prediction
             loss, accuracy, num_correct = prototypical_networks_loss(self.p, query, tf.shape(self.query)[1], self.label)
             return loss, accuracy, num_correct
+    
+class AptosProtoModel(ProtoModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.p = tf.placeholder(tf.float32, [None, 256])
+        self.query = tf.placeholder(tf.float32, [None, None, 256, 256, 3])
+        self.label = tf.placeholder(tf.int32, [None, None])
+        self.query_reshape = tf.reshape(self.query, shape = [tf.shape(self.query)[0] * tf.shape(self.query)[1],\
+                            256, 256, 3])
+        self.batch_norm = partial(tf.layers.batch_normalization,\
+            momentum = 0.9, epsilon=1e-5, fused=True, center=True, scale=False)
+        self.prediction
+        self.optimize
+        self.metrics
+
+    def compute_batch_prototypes(self, sess, support_batch, total_classes):
+        prototypes = np.zeros((total_classes, 256))
+        for i in range(0, len(support_batch), total_classes):
+            s = support_batch[i:i + total_classes]
+            feed_dict = {
+                self.query: s,
+                self.is_train: False
+            }
+            z_p = sess.run(self.prediction_proto, feed_dict=feed_dict)
+            prototypes[i:i + total_classes] = z_p
+        return prototypes
+
+    @define_scope
+    def prediction(self):
+        # d = super().prediction()
+        # with tf.device(assign_to_device(d, self.config.controller)):
+        with tf.device('/gpu:0'):
+            x = self.query_reshape
+            x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
+            x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
+            x = _max_pooling('pool3', _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
+            x = _max_pooling('pool4', _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
+            x = _relu(self.batch_norm(_conv('conv5', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
+            x = tf.contrib.layers.flatten(x)
+            x = _fully_connected('fc1', x, 256)
+            return x
+    
+    @define_scope
+    def prediction_proto(self):
+        # d = self.get_single_device()
+        # with tf.device(assign_to_device(d, self.config.gpu)):
+        with tf.device('/gpu:0'):
+            proto = self.prediction
+            return tf.reduce_mean(tf.reshape(proto, [tf.shape(self.query)[0], tf.shape(self.query)[1], tf.shape(proto)[-1]]), axis=1)
+
+    @define_scope
+    def optimize(self):
+        # d = self.get_single_device()
+        # with tf.device(assign_to_device(d, self.config.gpu)):
+        with tf.device('/gpu:0'):
+            optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+
+            loss, accuracy, num_correct = self.metrics
+            
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.control_dependencies(update_ops):
+                train_op = optimizer.minimize(loss)
+
+            print("Training Loss: {0}  Training Accuracy: {1}".format(loss, accuracy))
+
+            return train_op, loss, accuracy
+    
+    @define_scope(scope='stream_metrics')
+    def metrics(self):
+        # d = self.get_single_device()
+        # with tf.device(assign_to_device(d, self.config.controller)):
+        with tf.device('/gpu:0'):
+            query = self.prediction
+            loss, accuracy, num_correct = prototypical_networks_loss(self.p, query, tf.shape(self.query)[1], self.label)
+            return loss, accuracy, num_correct
+    
+            

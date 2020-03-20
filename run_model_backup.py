@@ -10,8 +10,7 @@ from data.mnist.read_mnist import MNIST
 from data.isolet.read_isolet import Isolet
 from data.omniglot.read_omniglot import Omniglot
 from data.tiny_imagenet.read_tiny_imagenet import TinyImageNet
-from data.aptos.read_aptos import Aptos
-from data.episode_generator import aptos_generate_training_episodes, aptos_generate_evaluation_episodes, generate_training_episode, generate_evaluation_episode 
+from data.episode_generator import generate_training_episode, generate_evaluation_episode 
 from losses.histogram_loss import train_batches
 from models.hist_model import *
 from models.proto_model import *
@@ -133,7 +132,7 @@ def train_histogram_loss(sess, model, data, params):
             logging.info('Early Stopping Epoch: {}\n'.format(epoch))
             break
 
-    if not params['adaptive']: #or params['k'] <= 1:
+    if not params['adaptive'] or params['k'] <= 1:
         print('Optimization Finished \n')
         print('test accuracy: {}'.format(initial_best_epoch['test_acc']))
         logging.info('Optimization Finished \n')
@@ -191,120 +190,6 @@ def train_histogram_loss(sess, model, data, params):
     print('test accuracy: {}'.format(transfer_best_epoch['test_acc']))
     logging.info('Transfer training done \n')
     logging.info('test accuracy: {}'.format(transfer_best_epoch['test_acc']))
-
-def aptos_train_proto_nets(sess, model, data, params):
-    (x_train, y_train), (x_valid, y_valid), (x_train2, y_train2), (x_test2, y_test2) = data
-
-    i = 1
-    best_episode = {'episode': -1, 'valid_acc': -1, 'test_acc': -1}
-
-    if params['n'] == 5:
-        option = 0
-    else:
-        option = 1
-
-    print("start training")
-    for support_batch, query_batch, query_labels_batch in aptos_generate_training_episodes(x_train, y_train, option, params['k'], \
-        params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
-        print(i)
-        feed_dict = {
-            model.query: query_batch,
-            model.label: query_labels_batch,
-            model.is_train: True,
-            model.learning_rate: params['learning_rate']
-        }
-
-        prototypes = model.compute_batch_prototypes(sess, support_batch, params['n'])
-        feed_dict[model.p] = prototypes
-
-        sess.run(model.optimize, feed_dict=feed_dict)
-
-        if i % 1 == 4:
-            valid_cost, valid_acc = proto_performance(sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
-            valid_cost, valid_acc = float(valid_cost), float(valid_acc)
-            print('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
-            logging.info('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
-
-            if valid_acc > best_episode['valid_acc']:
-                best_episode['episode'] = i
-                best_episode['valid_acc'] = valid_acc
-
-                # if not params['adaptive'] or params['k'] <= 1:
-                #     test_cost, test_acc = proto_performance(sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
-                #     best_episode['test_acc'] = float(test_acc)
-
-                model.save_model(sess, i)
-
-            if i - best_episode['episode'] >= params['patience'] or i > 10000:
-                print('Early Stopping Episode: {}\n'.format(i))
-                logging.info('Early Stopping Episode: {}\n'.format(i))
-                break
-
-        i += 1
-
-    if not params['adaptive'] or params['k'] <= 1:
-        print('Optimization Finished \n')
-        test_cost, test_acc = proto_performance(sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
-        print('test accuracy: {}'.format(float(test_acc)))
-        logging.info('Optimization Finished \n')
-        logging.info('test accuracy: {}'.format(float(test_acc)))
-        return
-
-    print('Initial training done \n')
-    logging.info('Initial training done \n')
-
-    i = 1
-    model.restore_model(sess)
-    # Let 75% of the k points be used as support and rest as query when adapting
-    episode_support = math.floor(0.75 * params['k'])
-    episode_query = params['k'] - episode_support
-
-    transfer_best_episode = {'episode': -1, 'train_acc': -1, 'test_acc': -1}
-    es_acc = 0.0
-
-    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train2, y_train2, params['classes_per_episode'], episode_support, episode_query, params['training_episodes'], batch_size=params['query_batch_size']):
-        feed_dict = {
-            model.query: query_batch,
-            model.label: query_labels_batch,
-            model.is_train: True,
-            model.learning_rate: params['learning_rate']
-        }
-
-        if params['dataset'] == 'tiny_imagenet':
-            prototypes = model.compute_batch_prototypes(sess, support_batch, params['classes_per_episode'])
-            feed_dict[model.p] = prototypes
-        else:
-            feed_dict[model.support] = support_batch
-        
-        sess.run(model.optimize, feed_dict=feed_dict)
-
-        if i % 200 == 1:
-            train_perf, train_std = proto_episodic_performance(sess, model, x_train2, y_train2, params['classes_per_episode'], episode_support, episode_query, params['query_batch_size'], params['evaluation_episodes'])
-            train_perf[0] = float(train_perf[0])
-            train_perf[1] = float(train_perf[1])
-            print('train [{}] train cost: {} train accuracy: {}'.format(i, train_perf[1], train_perf[0]))
-            logging.info('train [{}] train cost: {} train accuracy: {}'.format(i, train_perf[1], train_perf[0]))
-
-            if train_perf[0] > transfer_best_episode['train_acc']:
-                transfer_best_episode['episode'] = i
-                transfer_best_episode['train_acc'] = train_perf[0]
-                test_cost, test_acc = proto_performance(sess, model, x_train2, y_train2, x_test2, y_test2, batch_size=params['query_batch_size'])
-                transfer_best_episode['test_acc'] = float(test_acc)
-
-        if i % params['patience'] == 0:
-            acc_diff = transfer_best_episode['train_acc'] - es_acc
-            if acc_diff < params['percentage_es'] * es_acc:
-                print('Early Stopping Episode: {}\n'.format(i))
-                logging.info('Early Stopping Episode: {}\n'.format(i))
-                break
-            es_acc = transfer_best_episode['train_acc']
-
-        i += 1
-
-    print('Transfer training done \n')
-    print('test accuracy: {}'.format(transfer_best_episode['test_acc']))
-    logging.info('Transfer training done \n')
-    logging.info('test accuracy: {}'.format(transfer_best_episode['test_acc']))
 
 def train_proto_nets(sess, model, data, params):
     (x_train, y_train), (x_valid, y_valid), (x_train2, y_train2), (x_test2, y_test2) = data
@@ -440,9 +325,6 @@ def get_model(params):
         elif params['dataset'] == 'omniglot':
             model = OmniglotProtoModel(params)
             data = Omniglot(params['data_path']).kntl_data_form(params['n'], params['k'], params['n'])
-        elif params['dataset'] == 'aptos':
-            model = AptosProtoModel(params)
-            data = Aptos(params['data_path']).kntl_data_form(26, 5, params['k'], 5)
         else:
             model = TinyImageNetProtoModel(params)
             data = TinyImageNet(params['data_path']).kntl_data_form(350, params['n'], params['k'], params['n'])
@@ -506,9 +388,8 @@ def run(params):
             sess.run(init)
             
             rep_path = os.path.join(params['save_dir'], 'replication{}'.format(rep + 1))
-            if os.path.exists(rep_path):
+            if os.path.exists(rep_path) and os.path.isdir(rep_path):
                 shutil.rmtree(rep_path)
-
             os.mkdir(rep_path)
             model.config['save_dir_by_rep'] = rep_path
 
@@ -521,11 +402,7 @@ def run(params):
             elif params['command'] == 'hist_loss':
                 train_histogram_loss(sess, model, data, params)
             elif params['command'] == 'proto':
-                if params['dataset'] == 'aptos':
-                    print("here")
-                    aptos_train_proto_nets(sess, model, data, params)
-                else:
-                    train_proto_nets(sess, model, data, params)
+                train_proto_nets(sess, model, data, params)
             else:
                 print('Unknown model type')
                 logging.debug('Unknown model type')
