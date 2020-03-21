@@ -2,7 +2,7 @@
 -dp /srv/scratch/z5141541/data/aptos/aptos
 -k 10
 -n 5
--lr 0.0001
+-lr 0.001
 -p 6000
 -esr 0.01
 -r 1234
@@ -13,8 +13,8 @@
 -lf /home/z5141541/tor/adapted_deep_embeddings/trained_models/aptos/aptos_10_10/proto_net/log.txt
 proto
 --classes_per_episode 5 
---query_train_per_class 16
---training_episodes 70 
---evaluation_episodes 70 
---query_batch_size 8
+--query_train_per_class 256
+--training_episodes 10
+--evaluation_episodes 1 
+--query_batch_size 32
 

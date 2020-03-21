@@ -6,14 +6,18 @@ from scipy.ndimage import imread
 from scipy.misc import imresize
 import json
 import cv2
+from progress_master.progress.bar import Bar
 
 def load_aptos_data(ids):
     imgs = []
+    bar = Bar('Loading image contents', max=len(ids))
     for each in ids:
-        print("load {0}".format(each))
+        # print("load {0}".format(each))
         img = imread(each)
         imgs.append(cv2.resize(img, (256, 256), interpolation=cv2.INTER_CUBIC))
+        bar.next()
     imgs = _process_images(imgs)
+    bar.finish()
     return imgs
 
 def _process_images(images):
@@ -32,6 +36,9 @@ class Aptos():
         self.x_valid = []
         self.y_valid = []
 
+        self.x_test = []
+        self.y_test = []
+
     def read_data(self):
         img_ids = []
         labels = []
@@ -39,7 +46,7 @@ class Aptos():
 
         for root, dirs, files in os.walk(self.path):
             for f in files:
-                if count >= 4:
+                if count >= 4:  # early quitting
                     break
                 fpath = os.path.join(root, f)
                 if f == "base15.json" \
@@ -52,15 +59,12 @@ class Aptos():
                     count += 1
             if count >= 4:
                 break
-        print("end")
+        print("All images loading complete.")
         
         img_ids = np.array(img_ids)
-        labels = self.process_labels(labels)
+        labels = np.array(labels)
 
         return img_ids, labels
-
-    def process_labels(self, labels):
-        return np.array(labels)
 
     # domain_option = 
     #   0 - images of all classes 
@@ -76,7 +80,6 @@ class Aptos():
             meta = json.load(ann)
         
         zipped_li = list(zip(meta['image_names'], meta['image_labels']))
-        random.shuffle(zipped_li)
 
         r_labels = [0, 1, 2, 3, 4]
         for x, y in zipped_li:
@@ -97,16 +100,15 @@ class Aptos():
 
     def kntl_data_form(self, k1, n1, k2, n2):
         self.load_data()
-        print("generate domain")
+        print("Start generating domains")
         self.generate_domain(k1, k2)
         return (self.x_train, self.y_train), (self.x_valid, self.y_valid), \
-               (np.array([]), np.array([])), (np.array([]), np.array([]))
+               (np.array([]), np.array([])), (self.x_test, self.y_test)
 
     def generate_domain(self, k1, k2):
         all_classes = np.unique(self.labels)
-
+        # shuffle
         shuffle = np.random.permutation(self.labels.shape[0])
-
         x_task, y_task = self.img_ids[shuffle], self.labels[shuffle]
 
         sorted_class_index = np.sort(all_classes)
@@ -118,18 +120,27 @@ class Aptos():
             self.y_train.extend(y_task[idx])
 
             all_indices = np.delete(all_indices, np.where(np.isin(all_indices, idx)))
-            idx = np.random.choice(all_indices, 16, replace=False)
+            idx = np.random.choice(all_indices, 20, replace=False) # 10 valid tests for each class
             self.x_valid.extend(x_task[idx])
             self.y_valid.extend(y_task[idx])
+
+            all_indices = np.delete(all_indices, np.where(np.isin(all_indices, idx)))
+            idx = np.random.choice(all_indices, 20, replace=False) # 10 valid tests for each class
+            self.x_test.extend(x_task[idx])
+            self.y_test.extend(y_task[idx])
+
         
         self.x_train = np.array(self.x_train)
         self.x_valid = np.array(self.x_valid)
-        print("Train: {0}".format(self.x_train.shape[0]))
-        print("Valid: {0}".format(self.x_valid.shape[0]))
+        self.x_test = np.array(self.x_test)
         self.y_train = np.array(self.y_train)
         self.y_valid = np.array(self.y_valid)
+        self.y_test = np.array(self.y_test)
+        print("Train: {0} = {1}".format(self.x_train.shape, self.y_train.shape))
+        print("Valid: {0} = {1}".format(self.x_valid.shape, self.y_valid.shape))
+        print("Test: {0} = {1}".format(self.x_test.shape, self.y_test.shape))
         
-
         self.x_train = load_aptos_data(self.x_train)
         self.x_valid = load_aptos_data(self.x_valid)
+        self.x_test = load_aptos_data(self.x_test)
 

@@ -206,7 +206,12 @@ def aptos_train_proto_nets(sess, model, data, params):
     print("start training")
     for support_batch, query_batch, query_labels_batch in aptos_generate_training_episodes(x_train, y_train, option, params['k'], \
         params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
-        print(i)
+        # print(i)
+
+        # print(query_batch.shape)
+        # print(query_batch.shape)
+
+        # print(support_batch.shape)
         feed_dict = {
             model.query: query_batch,
             model.label: query_labels_batch,
@@ -219,8 +224,8 @@ def aptos_train_proto_nets(sess, model, data, params):
 
         sess.run(model.optimize, feed_dict=feed_dict)
 
-        if i % 1 == 4:
-            valid_cost, valid_acc = proto_performance(sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
+        if i % 8 == 1:
+            valid_cost, valid_acc = proto_performance(sess, model, x_train, y_train, x_valid, y_valid, 0)
             valid_cost, valid_acc = float(valid_cost), float(valid_acc)
             print('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
             logging.info('valid [{}] valid cost: {} valid accuracy: {}'.format(i, valid_cost, valid_acc))
@@ -244,7 +249,7 @@ def aptos_train_proto_nets(sess, model, data, params):
 
     if not params['adaptive'] or params['k'] <= 1:
         print('Optimization Finished \n')
-        test_cost, test_acc = proto_performance(sess, model, x_train, y_train, x_valid, y_valid, batch_size=params['query_batch_size'])
+        test_cost, test_acc = proto_performance(sess, model, x_train, y_train, x_test2, y_test2, 0)
         print('test accuracy: {}'.format(float(test_acc)))
         logging.info('Optimization Finished \n')
         logging.info('test accuracy: {}'.format(float(test_acc)))
@@ -311,7 +316,7 @@ def train_proto_nets(sess, model, data, params):
 
     i = 1
     best_episode = {'episode': -1, 'valid_acc': -1, 'test_acc': -1}
-    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, params['classes_per_episode'], params['k'], params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
+    for support_batch, query_batch, query_labels_batch in generate_training_episode(x_train, y_train, params['classes_per_episode'], 32, params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
         feed_dict = {
             model.query: query_batch,
             model.label: query_labels_batch,
@@ -442,7 +447,7 @@ def get_model(params):
             data = Omniglot(params['data_path']).kntl_data_form(params['n'], params['k'], params['n'])
         elif params['dataset'] == 'aptos':
             model = AptosProtoModel(params)
-            data = Aptos(params['data_path']).kntl_data_form(26, 5, params['k'], 5)
+            data = Aptos(params['data_path']).kntl_data_form(288, 5, params['k'], 5)
         else:
             model = TinyImageNetProtoModel(params)
             data = TinyImageNet(params['data_path']).kntl_data_form(350, params['n'], params['k'], params['n'])

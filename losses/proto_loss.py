@@ -14,6 +14,7 @@ def prototypical_networks_loss(prototypes, query, num_query_per_class, target_in
     prototypes = tf.expand_dims(prototypes, 0)
     query = tf.expand_dims(query, 1)
 
+
     dist = tf.reduce_sum(tf.pow(query - prototypes, 2), 2)
     log_prob = tf.nn.log_softmax(-dist)
     log_prob = tf.reshape(log_prob, shape=[m, num_query_per_class, -1])
@@ -33,5 +34,4 @@ def prototypical_networks_loss(prototypes, query, num_query_per_class, target_in
     correct = tf.equal(y_hat, target_indices)
     num_correct = tf.reduce_sum(tf.cast(correct, tf.int32))
     accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-
     return loss, accuracy, num_correct

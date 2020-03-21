@@ -68,12 +68,13 @@ def proto_performance(sess, model, x_s, y_s, x_q, y_q, batch_size):
     num_query = 0
 
     # Generator will only be run once if batch_size <= 0
+    print("Start testing validity...")
     generator = None
     if model.config.dataset == 'aptos':
         generator = aptos_generate_evaluation_episodes
     else:
         generator = generate_evaluation_episode
-    for support_batch, query_batch, query_labels_batch in generator(x_s, y_s, x_q, y_q, batch_size=batch_size):
+    for support_batch, query_batch, query_labels_batch, flag in generator(x_s, y_s, x_q, y_q, batch_size=batch_size):
         feed_dict = {
                 model.query: query_batch,
                 model.label: query_labels_batch,
@@ -91,10 +92,14 @@ def proto_performance(sess, model, x_s, y_s, x_q, y_q, batch_size):
         
         c, acc, num_corr = sess.run(model.metrics, feed_dict=feed_dict)
 
-        if batch_size > 0:
-            num_query += query_labels_batch.shape[0] * query_labels_batch.shape[1]
-            total_cost += c
-            total_accuracy += float(num_corr)
+        if flag != -1:
+            print("Class {0}: Loss = {1}  Accuracy = {2}  AccNum = {3}".format(flag, c, acc, num_corr))
+        # else:
+
+        # if batch_size > 0:
+        #     num_query += query_labels_batch.shape[0] * query_labels_batch.shape[1]
+        #     total_cost += c
+        #     total_accuracy += float(num_corr)
         else:
             total_cost = c
             total_accuracy = acc 

@@ -219,7 +219,7 @@ class TinyImageNetProtoModel(ProtoModel):
 class AptosProtoModel(ProtoModel):
     def __init__(self, config):
         super().__init__(config)
-        self.p = tf.placeholder(tf.float32, [None, 256])
+        self.p = tf.placeholder(tf.float32, [None, 512])
         self.query = tf.placeholder(tf.float32, [None, None, 256, 256, 3])
         self.label = tf.placeholder(tf.int32, [None, None])
         self.query_reshape = tf.reshape(self.query, shape = [tf.shape(self.query)[0] * tf.shape(self.query)[1],\
@@ -231,15 +231,21 @@ class AptosProtoModel(ProtoModel):
         self.metrics
 
     def compute_batch_prototypes(self, sess, support_batch, total_classes):
-        prototypes = np.zeros((total_classes, 256))
-        for i in range(0, len(support_batch), total_classes):
-            s = support_batch[i:i + total_classes]
-            feed_dict = {
-                self.query: s,
-                self.is_train: False
-            }
-            z_p = sess.run(self.prediction_proto, feed_dict=feed_dict)
-            prototypes[i:i + total_classes] = z_p
+        prototypes = np.zeros((total_classes, 512))
+        feed_dict = {
+            self.query: support_batch,
+            self.is_train: False
+        }
+        prototypes = sess.run(self.prediction_proto, feed_dict = feed_dict)
+        # for i in range(0, len(support_batch), total_classes):
+        #     s = support_batch[i:i + total_classes]
+        #     feed_dict = {
+        #         self.query: s,
+        #         self.is_train: False
+        #     }
+        #     z_p = sess.run(self.prediction_proto, feed_dict=feed_dict)
+        #     prototypes[i:i + total_classes] = z_p
+        # print("Prototype shape: {0}".format(prototypes.shape))
         return prototypes
 
     @define_scope
@@ -251,10 +257,10 @@ class AptosProtoModel(ProtoModel):
             x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
             x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
             x = _max_pooling('pool3', _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
-            x = _max_pooling('pool4', _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
-            x = _relu(self.batch_norm(_conv('conv5', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
+            # x = _max_pooling('pool4', _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
+            x = _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
             x = tf.contrib.layers.flatten(x)
-            x = _fully_connected('fc1', x, 256)
+            x = _fully_connected('fc1', x, 512)
             return x
     
     @define_scope
@@ -273,12 +279,12 @@ class AptosProtoModel(ProtoModel):
             optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
 
             loss, accuracy, num_correct = self.metrics
+            print("Training Loss: {0}  Training Accuracy: {1}".format(loss, accuracy))
             
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(update_ops):
                 train_op = optimizer.minimize(loss)
 
-            print("Training Loss: {0}  Training Accuracy: {1}".format(loss, accuracy))
 
             return train_op, loss, accuracy
     
