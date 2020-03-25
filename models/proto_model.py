@@ -213,13 +213,13 @@ class TinyImageNetProtoModel(ProtoModel):
         # with tf.device(assign_to_device(d, self.config.gpu)):
         with tf.device('/gpu:0'):
             query = self.prediction
-            loss, accuracy, num_correct = prototypical_networks_loss(self.p, query, tf.shape(self.query)[1], self.label)
+            loss, accuracy, num_correct, log = prototypical_networks_loss(self.p, query, tf.shape(self.query)[1], self.label)
             return loss, accuracy, num_correct
     
 class AptosProtoModel(ProtoModel):
     def __init__(self, config):
         super().__init__(config)
-        self.p = tf.placeholder(tf.float32, [None, 512])
+        self.p = tf.placeholder(tf.float32, [None, 256])
         self.query = tf.placeholder(tf.float32, [None, None, 256, 256, 3])
         self.label = tf.placeholder(tf.int32, [None, None])
         self.query_reshape = tf.reshape(self.query, shape = [tf.shape(self.query)[0] * tf.shape(self.query)[1],\
@@ -231,7 +231,7 @@ class AptosProtoModel(ProtoModel):
         self.metrics
 
     def compute_batch_prototypes(self, sess, support_batch, total_classes):
-        prototypes = np.zeros((total_classes, 512))
+        prototypes = np.zeros((total_classes, 256))
         feed_dict = {
             self.query: support_batch,
             self.is_train: False
@@ -257,10 +257,10 @@ class AptosProtoModel(ProtoModel):
             x = _max_pooling('pool1', _relu(self.batch_norm(_conv('conv1', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
             x = _max_pooling('pool2', _relu(self.batch_norm(_conv('conv2', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
             x = _max_pooling('pool3', _relu(self.batch_norm(_conv('conv3', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
-            # x = _max_pooling('pool4', _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
-            x = _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
+            x = _max_pooling('pool4', _relu(self.batch_norm(_conv('conv4', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train)), 2, 2)
+            x = _relu(self.batch_norm(_conv('conv5', x, 3, x.get_shape()[-1], 32, 1), training=self.is_train))
             x = tf.contrib.layers.flatten(x)
-            x = _fully_connected('fc1', x, 512)
+            x = _fully_connected('fc1', x, 256)
             return x
     
     @define_scope
@@ -276,10 +276,11 @@ class AptosProtoModel(ProtoModel):
         # d = self.get_single_device()
         # with tf.device(assign_to_device(d, self.config.gpu)):
         with tf.device('/gpu:0'):
-            optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+            # optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+            optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate)
 
             loss, accuracy, num_correct = self.metrics
-            print("Training Loss: {0}  Training Accuracy: {1}".format(loss, accuracy))
+            # print("Training Loss: {0}  Training Accuracy: {1}".format(loss, accuracy))
             
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(update_ops):
@@ -294,7 +295,10 @@ class AptosProtoModel(ProtoModel):
         # with tf.device(assign_to_device(d, self.config.controller)):
         with tf.device('/gpu:0'):
             query = self.prediction
-            loss, accuracy, num_correct = prototypical_networks_loss(self.p, query, tf.shape(self.query)[1], self.label)
-            return loss, accuracy, num_correct
+            loss, accuracy, num_correct, log = prototypical_networks_loss(self.p, query, tf.shape(self.query)[1], self.label)
+
+            # print("log")
+            # print(log)
+            return loss, accuracy, num_correct#, log
     
             

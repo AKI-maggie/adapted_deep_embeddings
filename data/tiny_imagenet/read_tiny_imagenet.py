@@ -4,6 +4,7 @@ import random
 import numpy as np
 from scipy.ndimage import imread
 from scipy.misc import imresize
+from progress_master.progress.bar import Bar
 
 class TinyImageNet():
     def __init__(self, path):
@@ -37,6 +38,7 @@ class TinyImageNet():
         labels = []
         print(path)
         for root, dirs, files in os.walk(path):
+            bar = Bar('Checking files in root {0}'.format(root), max=len(files))
             for f in files:
                 if f == 'val_annotations.txt':
                     validation_annotations = os.path.join(root, f)
@@ -54,15 +56,22 @@ class TinyImageNet():
                             img = np.repeat(np.expand_dims(img, axis=2), 3, axis=2)
                         images.append(img)
                         labels.append(id_to_label[id])
+                bar.next()
+            bar.finish()
 
         with open(validation_annotations) as val_ann:
-            for line in val_ann:
-                contents = line.split()
-                img = imread(validation_images[contents[0]])
-                if len(img.shape) == 2:
-                    img = np.repeat(np.expand_dims(img, axis=2), 3, axis=2)
-                images.append(img)
-                labels.append(id_to_label[contents[1]])
+            lines = val_ann.readlines()
+
+        bar = Bar('Loading image contents', max=len(lines))
+        for line in lines:
+            contents = line.split()
+            img = imread(validation_images[contents[0]])
+            if len(img.shape) == 2:
+                img = np.repeat(np.expand_dims(img, axis=2), 3, axis=2)
+            images.append(img)
+            labels.append(id_to_label[contents[1]])
+            bar.next()
+        bar.finish()
 
         return images, labels
 

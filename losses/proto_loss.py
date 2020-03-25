@@ -34,4 +34,4 @@ def prototypical_networks_loss(prototypes, query, num_query_per_class, target_in
     correct = tf.equal(y_hat, target_indices)
     num_correct = tf.reduce_sum(tf.cast(correct, tf.int32))
     accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-    return loss, accuracy, num_correct
+    return loss, accuracy, num_correct, log_prob
