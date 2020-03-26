@@ -204,7 +204,7 @@ def aptos_train_proto_nets(sess, model, data, params):
         option = 1
 
     print("start training")
-    for support_batch, query_batch, query_labels_batch in aptos_generate_training_episodes(x_train, y_train, option, params['k'], \
+    for support_batch, query_batch, query_labels_batch in aptos_generate_training_episodes(x_train, y_train, option, 100, \
         params['query_train_per_class'], params['training_episodes'], batch_size=params['query_batch_size']):
         # print(i)
 
@@ -222,7 +222,8 @@ def aptos_train_proto_nets(sess, model, data, params):
         prototypes = model.compute_batch_prototypes(sess, support_batch, 2)
         feed_dict[model.p] = prototypes
 
-        sess.run(model.optimize, feed_dict=feed_dict)
+        _, loss, acc = sess.run(model.optimize, feed_dict=feed_dict)
+        print("train [{}] train cost: {} train accuracy: {}".format(i, loss, acc))
 
         if i % 20 == 1:
             valid_cost, valid_acc = proto_performance(sess, model, x_train, y_train, x_valid, y_valid, 0)
@@ -447,7 +448,7 @@ def get_model(params):
             data = Omniglot(params['data_path']).kntl_data_form(params['n'], params['k'], params['n'])
         elif params['dataset'] == 'aptos':
             model = AptosProtoModel(params)
-            data = Aptos(params['data_path']).kntl_data_form(330, 5, params['k'], 5)
+            data = Aptos(params['data_path']).kntl_data_form(380, 5, params['k'], 5)
         else:
             model = TinyImageNetProtoModel(params)
             data = TinyImageNet(params['data_path']).kntl_data_form(350, params['n'], params['k'], params['n'])
